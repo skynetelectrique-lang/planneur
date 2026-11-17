@@ -331,6 +331,19 @@ input[type=range]{width:100%;accent-color:var(--rose)}
 .sdot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--aqua)}
 .sdot.wait{background:var(--sand)}
 .sdot.bad{background:#9B3B4E}
+
+/* objectifs */
+.gadd{border:1.5px dashed #C9BBA3;background:transparent;border-radius:20px;min-height:56px;color:var(--teal);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.gcardo{background:var(--card);border-radius:20px;overflow:hidden;border-left:5px solid var(--c)}
+.gmain{border:0;background:none;width:100%;text-align:left;display:flex;gap:14px;align-items:center;padding:14px 16px}
+.gring{position:relative;width:52px;height:52px;flex-shrink:0}
+.gring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--k)}
+.gt{font-family:var(--serif);font-size:18px;font-weight:600;line-height:1.2}
+.gw{font-size:13px;color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gm{font-size:12px;color:var(--k);font-weight:600}
+.gnext{display:flex;align-items:center;gap:4px;padding:2px 12px 10px 8px;background:var(--t)}
+.gnext span{font-size:14px;line-height:1.3;padding:8px 0}
+.gnext small{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 
 </style>
@@ -467,6 +480,7 @@ function defaults() {
     curProg: 'p1',
     sessions: [],
     notes: [],
+    goals: [],
     breath: { pat: 'coh', min: 5, sound: false, custom: [4, 2, 6, 2] },
     timer: null,
     ambiances: ambDefaults(),
@@ -586,7 +600,7 @@ function renderSheet() {
   let el = document.getElementById('sheet');
   if (!S.sheet) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'sheet'; document.body.appendChild(el); }
-  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, paste: shPaste }[S.sheet.type];
+  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, paste: shPaste, goal: shGoal }[S.sheet.type];
   el.innerHTML = `<div class="scrim" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${fn()}</div></div>`;
   const auto = el.querySelector('[data-autofocus]');
   if (auto && !S.sheet._focused) { S.sheet._focused = true; setTimeout(() => auto.focus(), 60); }
@@ -1743,10 +1757,6 @@ const BREATH_ACTIONS = {
   'br-close': () => { BR.done = false; S.view = 'medit'; render(); },
 };
 /* --- Journal : to-do + notes libres --- */
-function jTabs() {
-  return `<div class="seg" role="tablist"><button role="tab" class="${S.jtab !== 'notes' ? 'on' : ''}" aria-selected="${S.jtab !== 'notes'}" data-a="jtab" data-v="todo">To-do</button><button role="tab" class="${S.jtab === 'notes' ? 'on' : ''}" aria-selected="${S.jtab === 'notes'}" data-a="jtab" data-v="notes">Notes</button></div>`;
-}
-function vJournalTab() { return S.jtab === 'notes' && S.todo.q === null ? vNotes() : vTodo(); }
 function noteWhen(ts) {
   const d = new Date(ts), k = dkey(d), tk = dkey(new Date()), hm = `${d.getHours()}:${pad(d.getMinutes())}`;
   if (k === tk) return "aujourd'hui · " + hm;
@@ -1910,6 +1920,93 @@ const SYNC_ACTIONS = {
   },
 };
 
+/* --- Journal : objectifs --- */
+const HORIZONS = [['mois', 'Ce mois-ci'], ['trim', 'Ce trimestre'], ['annee', 'Cette année'], ['libre', 'Sans échéance']];
+function jTabs() {
+  const t = S.jtab || 'todo', b = (v, l) => `<button role="tab" class="${t === v ? 'on' : ''}" aria-selected="${t === v}" data-a="jtab" data-v="${v}">${l}</button>`;
+  return `<div class="seg" role="tablist">${b('todo', 'To-do')}${b('goals', 'Objectifs')}${b('notes', 'Notes')}</div>`;
+}
+function vJournalTab() {
+  if (S.todo.q !== null) return vTodo();
+  return S.jtab === 'notes' ? vNotes() : S.jtab === 'goals' ? vGoals() : vTodo();
+}
+const gProg = g => g.steps.length ? g.steps.filter(s => s.done).length / g.steps.length : (g.done ? 1 : 0);
+function goalCard(g) {
+  const p = gProg(g), next = g.steps.find(s => !s.done), ink = INK[g.color] || g.color, n = g.steps.filter(s => s.done).length;
+  return `<div class="gcardo" style="--c:${g.color};--t:${TINT[g.color] || '#EEE'};--k:${ink}">
+    <button class="gmain" data-a="goal-open" data-id="${g.id}">
+      <span class="gring">${ring(52, 21, 6, p, g.color, '#E4D9C6')}<b>${Math.round(p * 100)}%</b></span>
+      <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1"><span class="gt">${esc(g.title)}</span>
+      ${g.why ? `<span class="gw">${esc(g.why)}</span>` : ''}
+      <span class="gm">${g.steps.length ? `${n}/${g.steps.length} étape${g.steps.length > 1 ? 's' : ''}` : 'Aucune étape'}${g.done ? ' · atteint' : ''}</span></span></button>
+    ${next && !g.done ? `<div class="gnext"><button class="tdchk" data-a="goal-step" data-g="${g.id}" data-id="${next.id}" aria-label="Valider « ${esc(next.text)} »"></button><span><small>Prochaine étape</small>${esc(next.text)}</span></div>` : ''}
+  </div>`;
+}
+function vGoals() {
+  const act = D.goals.filter(g => !g.done), fin = D.goals.filter(g => g.done);
+  const groups = HORIZONS.map(([h, l]) => { const gs = act.filter(g => g.horizon === h); return gs.length ? `<section style="display:flex;flex-direction:column;gap:10px"><h2 class="h-sec" style="font-size:19px">${l}</h2>${gs.map(goalCard).join('')}</section>` : ''; }).join('');
+  return `<main class="screen">
+    <header style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">${act.length} objectif${act.length > 1 ? 's' : ''} en cours</span><h1 class="h-title" style="font-size:34px">Journal</h1></header>
+    ${jTabs()}
+    <button class="gadd" data-a="goal-new">${ic('plus', 20, 2.2)} Nouvel objectif</button>
+    ${groups || (fin.length ? '' : `<p class="muted" style="margin:0">Un objectif = ce que tu veux atteindre, découpé en petites étapes concrètes. Chaque étape peut devenir une tâche de ta to-do.</p>`)}
+    ${fin.length ? `<section style="display:flex;flex-direction:column;gap:10px"><button class="link" style="align-self:flex-start" data-a="goal-showdone">${S.gShowDone ? 'Masquer les objectifs atteints' : `Objectifs atteints (${fin.length})`}</button>${S.gShowDone ? fin.map(goalCard).join('') : ''}</section>` : ''}
+  </main>`;
+}
+function shGoal() {
+  const G = S.sheet, g = G.id ? D.goals.find(x => x.id === G.id) : null;
+  const d = G.draft;
+  const hz = HORIZONS.map(([h, l]) => `<button class="chip ${d.horizon === h ? 'on' : ''}" data-a="goal-hz" data-v="${h}">${l}</button>`).join('');
+  const sw = COLORS.map(x => `<button class="swatch ${x === d.color ? 'on' : ''}" style="background:${x}" data-a="goal-col" data-v="${x}" aria-label="Couleur ${x}"></button>`).join('');
+  const head = `<h2 style="font-size:22px">${g ? 'Objectif' : 'Nouvel objectif'}</h2>
+    <div class="field"><label for="gtitle">Ce que je veux atteindre</label><input class="input" id="gtitle" value="${esc(d.title)}" placeholder="Ex. Sortir la démo d'Aurora Roots" ${g ? '' : 'data-autofocus'}></div>
+    <div class="field"><label for="gwhy">Pourquoi c'est important (facultatif)</label><textarea class="input" id="gwhy" style="min-height:64px">${esc(d.why)}</textarea></div>
+    <div class="field"><span class="lab">Horizon</span><div class="chips">${hz}</div></div>
+    <div class="field"><span class="lab">Couleur</span><div class="swatches">${sw}</div></div>`;
+  if (!g) return head + `<button class="btn-main" data-a="goal-create">Créer l'objectif</button>`;
+  return head + `<button class="btn-main" data-a="goal-save">Enregistrer</button>
+    <div class="field"><span class="lab">Étapes · ${g.steps.filter(s => s.done).length}/${g.steps.length}</span>
+      ${g.steps.length ? `<div class="list">${g.steps.map((s, i) => `<div class="tdrow ${s.done ? 'done' : ''}"><button class="tdchk ${s.done ? 'on' : ''}" data-a="goal-step" data-g="${g.id}" data-id="${s.id}" aria-label="${s.done ? 'Rouvrir' : 'Valider'} « ${esc(s.text)} »">${s.done ? ic('check', 16, 2.6, '#FBF6EC') : ''}</button><span class="tdtxt">${esc(s.text)}</span>
+        ${!s.done ? `<button class="act" style="border:0;background:none;color:var(--teal);font-weight:600;font-size:12px;min-height:44px" data-a="goal-task" data-g="${g.id}" data-id="${s.id}">→ to-do</button>` : ''}<button class="act" style="border:0;background:none;color:var(--muted);min-height:44px;width:36px" data-a="goal-sdel" data-g="${g.id}" data-id="${s.id}" aria-label="Supprimer l'étape">×</button></div>`).join('')}</div>` : ''}
+      <div class="row"><input class="input" id="gstep" placeholder="Ajouter une étape concrète" aria-label="Nouvelle étape"><button class="icon-btn" style="width:52px;height:52px" data-a="goal-sadd" aria-label="Ajouter l'étape">${ic('plus', 22, 2)}</button></div></div>
+    <button class="btn-soft" data-a="goal-done">${g.done ? 'Remettre en cours' : 'Objectif atteint'}</button>
+    <button class="btn-danger" data-a="goal-del">${G.confirm ? 'Confirmer la suppression' : 'Supprimer l\'objectif'}</button>`;
+}
+function gCapture() { const d = S.sheet.draft, t = input('gtitle'), w = input('gwhy'); if (t !== undefined) d.title = t; if (w !== undefined) d.why = w; }
+const gFind = id => D.goals.find(x => x.id === id);
+const GOAL_ACTIONS = {
+  'goal-new': () => openSheet({ type: 'goal', draft: { title: '', why: '', horizon: 'mois', color: COLORS[Math.floor(Math.random() * COLORS.length)] } }),
+  'goal-open': el => { const g = gFind(el.dataset.id); openSheet({ type: 'goal', id: g.id, draft: { title: g.title, why: g.why || '', horizon: g.horizon, color: g.color } }); },
+  'goal-hz': el => { gCapture(); S.sheet.draft.horizon = el.dataset.v; renderSheet(); },
+  'goal-col': el => { gCapture(); S.sheet.draft.color = el.dataset.v; renderSheet(); },
+  'goal-create': () => {
+    gCapture(); const d = S.sheet.draft; if (!d.title.trim()) { toast('Donne-lui un nom'); return; }
+    const g = { id: 'g' + uid(), title: d.title.trim(), why: d.why.trim(), horizon: d.horizon, color: d.color, steps: [], done: false, at: Date.now() };
+    D.goals.push(g); save(); S.sheet.id = g.id; render(); renderSheet();
+    setTimeout(() => { const x = document.getElementById('gstep'); if (x) x.focus(); }, 80);
+  },
+  'goal-save': () => { gCapture(); const g = gFind(S.sheet.id), d = S.sheet.draft; g.title = d.title.trim() || g.title; g.why = d.why.trim(); g.horizon = d.horizon; g.color = d.color; save(); closeSheet(); render(); },
+  'goal-sadd': () => {
+    const t = (input('gstep') || '').trim(); if (!t) return; gCapture();
+    gFind(S.sheet.id).steps.push({ id: 's' + uid(), text: t, done: false }); save(); render(); renderSheet();
+    const x = document.getElementById('gstep'); if (x) x.focus();
+  },
+  'goal-step': el => {
+    const g = gFind(el.dataset.g), s = g.steps.find(x => x.id === el.dataset.id); if (!s) return;
+    if (S.sheet && S.sheet.type === 'goal') gCapture();
+    s.done = !s.done; save(); render(); if (S.sheet && S.sheet.type === 'goal') renderSheet();
+    if (s.done && g.steps.every(x => x.done)) toast(`Toutes les étapes de « ${g.title} » sont faites`);
+  },
+  'goal-sdel': el => { gCapture(); const g = gFind(el.dataset.g); g.steps = g.steps.filter(x => x.id !== el.dataset.id); save(); render(); renderSheet(); },
+  'goal-task': el => {
+    const g = gFind(el.dataset.g), s = g.steps.find(x => x.id === el.dataset.id);
+    D.backlog.unshift({ id: uid(), text: s.text, q: 2 }); save(); toast('Ajoutée à ta to-do, dans Planifier');
+  },
+  'goal-done': () => { gCapture(); const g = gFind(S.sheet.id); g.done = !g.done; g.doneAt = g.done ? Date.now() : null; save(); closeSheet(); render(); if (g.done) toast('Objectif atteint. Bravo.'); },
+  'goal-del': () => { if (!S.sheet.confirm) { gCapture(); S.sheet.confirm = true; renderSheet(); return; } D.goals = D.goals.filter(x => x.id !== S.sheet.id); save(); closeSheet(); render(); },
+  'goal-showdone': () => { S.gShowDone = !S.gShowDone; render(); },
+};
+
 const A = {
   nav: el => { S.view = el.dataset.v; render(); },
   fab: () => openSheet({ type: 'add' }),
@@ -1990,7 +2087,7 @@ const A = {
   copy: () => { try { navigator.clipboard.writeText(JSON.stringify(D)).then(() => toast('Données copiées'), () => toast('Copie refusée')); } catch (e) { toast('Copie impossible ici'); } },
 };
 
-Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS);
+Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, GOAL_ACTIONS);
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-a]'); if (!el) return;
@@ -2013,6 +2110,7 @@ document.addEventListener('change', ev => {
 });
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && ev.target.id === 'lgpass') { ev.preventDefault(); A['login-go'](); return; }
+  if (ev.key === 'Enter' && ev.target.id === 'gstep') { ev.preventDefault(); A['goal-sadd'](); return; }
   if (ev.key === 'Enter' && ev.target.id === 'msval') { ev.preventDefault(); A['ms-save'](); return; }
   if (ev.key === 'Enter' && ev.target.id === 'tdnew') { ev.preventDefault(); A['td-add'](); return; }
   if (ev.key === 'Escape' && S.sheet) closeSheet();

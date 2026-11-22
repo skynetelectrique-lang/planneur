@@ -344,6 +344,42 @@ input[type=range]{width:100%;accent-color:var(--rose)}
 .gnext{display:flex;align-items:center;gap:4px;padding:2px 12px 10px 8px;background:var(--t)}
 .gnext span{font-size:14px;line-height:1.3;padding:8px 0}
 .gnext small{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+/* tcc */
+.tdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.tdays button{border:0;border-radius:14px;min-height:54px;background:rgba(251,246,236,.14);color:#FBF6EC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;padding:0}
+.tdays button b{font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;min-height:18px}
+.tdays button.on{background:#FBF6EC;color:var(--plum)}
+.tdays button.today{box-shadow:0 0 0 2px #FBF6EC}
+.tdays button:disabled{opacity:.35}
+.tplan .tp{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--line)}
+.tp .mk{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--chip);color:var(--muted)}
+.tp.cur .mk{background:var(--teal);color:#FBF6EC}
+.tp.done .mk{background:var(--aqua);color:#FBF6EC}
+.tp .tt{font-weight:700;font-size:15px}
+.tp .td{font-size:12px;color:var(--muted);line-height:1.35}
+.tp.cur .tt{color:var(--teal)}
+.tp.fut{opacity:.62}
+.tflow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px}
+.tflow span{background:var(--t);color:var(--k);border-radius:999px;padding:5px 10px;font-weight:700}
+.tflow i{font-style:normal;color:var(--muted)}
+.tloop{border:0;text-align:left;width:100%;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.tloop .tlt{font-family:var(--serif);font-size:19px;font-weight:600}
+.tchain{display:flex;flex-direction:column}
+.tstage{display:block;position:relative;padding:0 0 12px 24px}
+.tstage::before{content:"";position:absolute;left:3px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tstage::after{content:"";position:absolute;left:7px;top:17px;bottom:1px;width:2px;background:var(--line)}
+.tstage:last-child{padding-bottom:0}
+.tstage:last-child::after{display:none}
+.tstage b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tstage span{display:block;font-size:14px;line-height:1.4;margin-top:2px}
+.tstage span.empty{color:var(--muted);font-style:italic}
+.asrs{min-height:100vh;padding:calc(var(--safe-top) + 20px) 22px calc(var(--safe-bottom) + 30px);display:flex;flex-direction:column;gap:20px}
+.asrs .q{margin:0;font-family:var(--serif);font-size:24px;line-height:1.3;font-weight:600}
+.aprog{height:6px;background:var(--track);border-radius:999px;overflow:hidden}
+.aprog i{display:block;height:100%;background:var(--teal);border-radius:999px;transition:width .25s}
+.aopts{display:flex;flex-direction:column;gap:10px}
+.aopts button{min-height:58px;border:0;border-radius:18px;background:var(--card);font-size:16px;font-weight:600;text-align:left;padding:0 20px;display:flex;justify-content:space-between;align-items:center}
+.aopts button.on{background:var(--teal);color:#FBF6EC}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 
 </style>
@@ -404,6 +440,7 @@ const P = {
   bookmark: '<path d="M7 4h10v16l-5-3.5L7 20z"/>',
   todo: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 4.5M3.5 12l1.5 1.5 2.5-3"/><circle cx="5.2" cy="18" r="1.3"/>',
   stop: '<rect x="7" y="7" width="10" height="10" rx="2"/>',
+  tcc: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/><path d="M9 12.5l2 2 4-4.5"/>',
   more: '<circle cx="5" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="19" cy="12" r=".6"/>',
 };
 const HABIT_ICONS = ['meditation', 'book', 'sparkle', 'calendar', 'drop', 'dumbbell', 'stretch', 'scale', 'chart', 'moon', 'trash', 'code', 'grad', 'plant', 'heart', 'star', 'water', 'pen'];
@@ -487,6 +524,7 @@ function defaults() {
     doneTodos: [],
     measures: {},
     journal: {},
+    tcc: tccDef(),
   };
 }
 
@@ -575,7 +613,7 @@ function valLabel(k, h) {
 }
 
 /* ---------- état d'interface ---------- */
-const S = { mtab: 'breath', jtab: 'todo', libGroup: null, todo: { q: null, showDone: false }, view: 'today', sheet: null, routFilter: 'all', run: null, showAllBacklog: false, toast: null };
+const S = { ttab: 'week', asrs: null, mtab: 'breath', jtab: 'todo', libGroup: null, todo: { q: null, showDone: false }, view: 'today', sheet: null, routFilter: 'all', run: null, showAllBacklog: false, toast: null };
 let lastDayFull = false;
 
 /* ---------- rendu ---------- */
@@ -588,8 +626,9 @@ function render() {
   else if (S.view === 'focus') html = vFocus();
   else if (S.view === 'breath') html = vBreath();
   else if (S.view === 'run') html = vRun();
+  else if (S.view === 'asrs') html = vAsrs();
   else {
-    html = { today: vToday, week: vWeek, routines: vRoutines, sport: vSport, medit: vMedit, todo: vJournalTab }[S.view]() + vNav();
+    html = { today: vToday, week: vWeek, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
   }
   app().innerHTML = html;
   renderSheet();
@@ -600,7 +639,7 @@ function renderSheet() {
   let el = document.getElementById('sheet');
   if (!S.sheet) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'sheet'; document.body.appendChild(el); }
-  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, paste: shPaste, goal: shGoal }[S.sheet.type];
+  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, paste: shPaste, goal: shGoal, tcchw: shTccHw, tcclog: shTccLog, tccrules: shTccRules, tccloop: shTccLoop }[S.sheet.type];
   el.innerHTML = `<div class="scrim" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${fn()}</div></div>`;
   const auto = el.querySelector('[data-autofocus]');
   if (auto && !S.sheet._focused) { S.sheet._focused = true; setTimeout(() => auto.focus(), 60); }
@@ -608,7 +647,7 @@ function renderSheet() {
 
 function vNav() {
   const b = (v, icon, label) => `<button data-a="nav" data-v="${v}" class="${S.view === v ? 'on' : ''}" ${S.view === v ? 'aria-current="page"' : ''}>${ic(icon, 22, S.view === v ? 2 : 1.8)}${label}</button>`;
-  return `<nav class="nav" aria-label="Navigation principale">${b('today', 'sun', "Aujourd'hui")}${b('week', 'week', 'Semaine')}${b('todo', 'pen', 'Journal')}<div><button class="fab" data-a="fab" aria-label="Ajout rapide">${ic('plus', 26, 2.2)}</button></div>${b('routines', 'ring', 'Routines')}${b('sport', 'dumbbell', 'Sport')}${b('medit', 'lotus', 'Méditation').replace('</button>', SND.playing ? '<span class="live" aria-label="Ambiance en cours"></span></button>' : '</button>')}</nav>`;
+  return `<nav class="nav" aria-label="Navigation principale">${b('today', 'sun', "Aujourd'hui")}${b('week', 'week', 'Semaine')}${b('todo', 'pen', 'Journal')}<div><button class="fab" data-a="fab" aria-label="Ajout rapide">${ic('plus', 26, 2.2)}</button></div>${b('routines', 'ring', 'Routines')}${b('sport', 'dumbbell', 'Sport')}${b('tcc', 'tcc', 'TCC')}</nav>`;
 }
 
 /* --- Aujourd'hui --- */
@@ -2007,6 +2046,253 @@ const GOAL_ACTIONS = {
   'goal-showdone': () => { S.gShowDone = !S.gShowDone; render(); },
 };
 
+/* ============ TCC (programme de Safren, adapté) ============ */
+function tccDef() {
+  return {
+    session: 0,
+    hw: null,
+    log: [{ id: 'l' + uid(), date: '2026-11-22', n: 0, seen: 'État des lieux, choix de la TCC de Safren, création du carnet', hw: 'Faire la séance 0', res: '' }],
+    loop: ['Permis', 'Travail', 'Addictions'].map(x => ({ id: 'x' + uid(), ex: x, diff: '', fail: '', thought: '', avoid: '' })),
+    asrs: [],
+    rules: { rythme: '', decroche: '', medecin: '', femme: '' },
+  };
+}
+const TPLAN = [
+  { n: '0', t: 'Fondations', d: 'Ma boucle, ASRS, nos règles', from: 0, to: 0 },
+  { n: '1', t: "S'organiser et planifier", d: 'Un seul système, revue quotidienne, priorités, découper, rendre le temps visible', from: 1, to: 4 },
+  { n: '2', t: 'Gérer la distraction', d: 'Durée de concentration, blocs de travail, reporter les distractions', from: 5, to: 7 },
+  { n: '3', t: 'Penser autrement', d: 'Pensées automatiques, erreurs de pensée, autorité et travail', from: 8, to: 10 },
+  { n: '+', t: 'Procrastination', d: 'Appliquer les outils aux tâches repoussées', from: 11, to: 11 },
+  { n: '✓', t: 'Bilan', d: 'ASRS de fin, tenir dans la durée', from: 12, to: 12 },
+];
+const tPhase = n => TPLAN.find(p => n >= p.from && n <= p.to) || TPLAN[TPLAN.length - 1];
+const TSTAGES = [
+  ['diff', 'Difficulté TDAH en jeu', '#4FA9B8', 'Difficulté', 'Ex. oublier, repousser, ne pas savoir par où commencer'],
+  ['fail', 'Ce qui a raté', '#D9A35F', 'Raté', "Ce qui s'est concrètement passé"],
+  ['thought', 'La pensée qui a suivi', '#B0577A', 'Pensée', '« Je suis nul », « Ça sert à rien »…'],
+  ['avoid', "Ce que j'ai évité ensuite", '#7B3F63', 'Évitement', 'Ce que tu as fui ou laissé tomber'],
+];
+const TRULES = [
+  ['rythme', 'Rythme des séances', 'Ex. le dimanche à 14 h'],
+  ['decroche', 'Si je décroche', "Ce qu'on fait quand je reviens"],
+  ['medecin', "Quand j'appelle un médecin", 'Les signaux qui doivent me faire consulter'],
+  ['femme', 'Ma femme dans le programme', "Est-ce que je l'implique, et quand"],
+];
+/* ASRS v1.1 (OMS) : 18 questions, 0 à 4. Seuils de la zone grisée : 2 = Parfois, 3 = Souvent. */
+const ASRS_L = ['Jamais', 'Rarement', 'Parfois', 'Souvent', 'Très souvent'];
+const ASRS_TH = [2, 2, 2, 3, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3, 3, 2, 3, 2];
+const ASRS_Q = [
+  "Une fois le plus difficile d'un projet fait, à quelle fréquence as-tu du mal à en finaliser les derniers détails ?",
+  "Quand une tâche demande de l'organisation, à quelle fréquence as-tu du mal à mettre les choses en ordre ?",
+  'À quelle fréquence as-tu du mal à te souvenir de tes rendez-vous ou de tes obligations ?',
+  "Quand une tâche demande beaucoup de réflexion, à quelle fréquence évites-tu de t'y mettre ou repousses-tu le moment de commencer ?",
+  'À quelle fréquence remues-tu les mains ou les pieds, ou te tortilles-tu, quand tu dois rester assis longtemps ?',
+  'À quelle fréquence te sens-tu excessivement actif et poussé à faire des choses, comme mené par un moteur ?',
+  "À quelle fréquence fais-tu des erreurs d'inattention quand tu travailles sur un projet ennuyeux ou difficile ?",
+  'À quelle fréquence as-tu du mal à rester attentif pendant un travail ennuyeux ou répétitif ?',
+  "À quelle fréquence as-tu du mal à te concentrer sur ce qu'on te dit, même quand on s'adresse directement à toi ?",
+  'À quelle fréquence égares-tu des choses ou as-tu du mal à les retrouver, chez toi ou au travail ?',
+  "À quelle fréquence es-tu distrait par l'activité ou le bruit autour de toi ?",
+  "À quelle fréquence te lèves-tu en réunion, ou dans d'autres situations où l'on attend que tu restes assis ?",
+  'À quelle fréquence te sens-tu agité, incapable de tenir en place ?',
+  'À quelle fréquence as-tu du mal à décompresser et à te détendre quand tu as du temps pour toi ?',
+  'À quelle fréquence te surprends-tu à trop parler en société ?',
+  "En conversation, à quelle fréquence termines-tu les phrases des autres avant qu'ils aient pu le faire eux-mêmes ?",
+  "À quelle fréquence as-tu du mal à attendre ton tour quand c'est nécessaire ?",
+  'À quelle fréquence interromps-tu les autres quand ils sont occupés ?',
+];
+function asrsScore(ans) {
+  return { a: ans.slice(0, 6).filter((v, i) => v >= ASRS_TH[i]).length, total: ans.reduce((x, v) => x + v, 0) };
+}
+const tLongDate = k => { const d = fromKey(k); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+
+function tTabs() {
+  const t = S.ttab || 'week', b = (v, l) => `<button role="tab" class="${t === v ? 'on' : ''}" aria-selected="${t === v}" data-a="ttab" data-v="${v}">${l}</button>`;
+  return `<div class="seg" role="tablist">${b('week', 'Semaine')}${b('loop', 'Ma boucle')}${b('asrs', 'Mesure')}</div>`;
+}
+function vTcc() {
+  const T = D.tcc, t = S.ttab || 'week', ph = tPhase(T.session);
+  const body = t === 'loop' ? tLoopBody() : t === 'asrs' ? tAsrsBody() : tWeekBody();
+  return `<main class="screen">
+    <header style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Séance ${T.session} · ${esc(ph.t)}</span><h1 class="h-title" style="font-size:34px">TCC</h1></header>
+    ${tTabs()}${body}
+  </main>`;
+}
+function tHwCard() {
+  const T = D.tcc, k = todayKey();
+  if (!T.hw || !T.hw.text) return `<button class="one-empty" data-a="tcc-hw"><span class="eyebrow" style="color:var(--plum)">Devoir de la semaine</span><strong>Aucun devoir pour l'instant</strong><span style="font-size:13px">Un seul devoir à la fois, fixé en séance. Il s'affichera ici chaque jour.</span></button>`;
+  const s = fromKey(T.hw.since), days = Array.from({ length: 7 }, (_, i) => addDays(s, i));
+  const n = days.filter(d => T.hw.days[dkey(d)]).length, over = k > dkey(days[6]);
+  const strip = days.map(d => {
+    const dk = dkey(d), on = !!T.hw.days[dk], fut = dk > k;
+    return `<button data-a="tcc-day" data-k="${dk}" class="${on ? 'on' : ''} ${dk === k ? 'today' : ''}" ${fut ? 'disabled' : ''} aria-pressed="${on}" aria-label="${WDN[wd(d)]} ${d.getDate()}${on ? ', fait' : ''}"><span>${WDS[wd(d)]}</span><b>${on ? ic('check', 16, 2.6) : d.getDate()}</b></button>`;
+  }).join('');
+  return `<section class="one">
+    <span class="eyebrow">Devoir de la semaine</span>
+    <p>${esc(T.hw.text)}</p>
+    <div class="tdays">${strip}</div>
+    <div class="between"><span class="sub">${over ? 'Semaine terminée : on en fait le bilan en séance.' : `${n}/7 jour${n > 1 ? 's' : ''} · coche chaque jour où tu l'as fait`}</span>
+    <button class="pill-btn" data-a="tcc-hw">${ic('pen', 16, 2)}Modifier</button></div>
+  </section>`;
+}
+function tWeekBody() {
+  const T = D.tcc;
+  const plan = TPLAN.map(p => {
+    const st = T.session > p.to ? 'done' : T.session >= p.from ? 'cur' : 'fut';
+    const range = p.from === p.to ? `Séance ${p.from}` : `Séances ${p.from} à ${p.to}`;
+    return `<div class="tp ${st}"><span class="mk">${st === 'done' ? ic('check', 14, 2.6) : p.n}</span><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="tt">${esc(p.t)}</span><span class="td">${range} · ${esc(p.d)}</span></div></div>`;
+  }).join('');
+  const logs = T.log.slice().sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n);
+  const entries = logs.map(e => {
+    const lines = [["Ce qu'on a vu", e.seen], ['Devoir', e.hw], ['Résultat', e.res]].filter(x => (x[1] || '').trim());
+    return `<button class="card jentry" data-a="tcc-log" data-id="${e.id}"><span class="eyebrow">Séance ${e.n} · ${tLongDate(e.date)}</span>${lines.map(([l, v]) => `<span class="jl"><b>${l}</b>${esc(v)}</span>`).join('')}</button>`;
+  }).join('');
+  const rules = TRULES.map(([f, l]) => `<span class="jl"><b>${l}</b>${(T.rules[f] || '').trim() ? esc(T.rules[f]) : '<span class="muted">À définir en séance 0</span>'}</span>`).join('');
+  return `${tHwCard()}
+    <section style="display:flex;flex-direction:column;gap:10px"><h2 class="h-sec">Le programme</h2>
+      <div class="list tplan">${plan}
+        <div class="between" style="padding:8px 12px 8px 16px"><span class="muted" style="font-size:13px">Je suis à la séance</span>
+        <div class="stepper"><button data-a="tcc-sess" data-n="-1" aria-label="Séance précédente">−</button><b>${T.session}</b><button data-a="tcc-sess" data-n="1" aria-label="Séance suivante">+</button></div></div>
+      </div></section>
+    <section style="display:flex;flex-direction:column;gap:10px"><div class="between"><h2 class="h-sec">Journal des séances</h2><button class="link" data-a="tcc-log">+ Noter une séance</button></div>
+      ${entries || '<p class="muted" style="margin:0">Rien encore.</p>'}</section>
+    <section style="display:flex;flex-direction:column;gap:10px"><h2 class="h-sec">Nos règles</h2>
+      <button class="card jentry" data-a="tcc-rules">${rules}</button></section>`;
+}
+function tLoopBody() {
+  const flow = TSTAGES.map(([, , c, s]) => `<span style="--t:${TINT[c]};--k:${INK[c]}">${s}</span>`).join('<i>→</i>');
+  const cards = D.tcc.loop.map(b => `<button class="card tloop" data-a="tcc-loop" data-id="${b.id}"><span class="tlt">${esc(b.ex)}</span><span class="tchain">${TSTAGES.map(([f, l, c]) => `<span class="tstage" style="--c:${c}"><b>${l}</b>${(b[f] || '').trim() ? `<span>${esc(b[f])}</span>` : '<span class="empty">À remplir</span>'}</span>`).join('')}</span></button>`).join('');
+  return `<section class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+      <p style="margin:0;font-size:14px;line-height:1.45">Une difficulté liée au TDAH mène à un raté, le raté à une pensée négative, la pensée à l'évitement. Et l'évitement renforce la difficulté. Pour chaque exemple réel, remonte la chaîne.</p>
+      <div class="tflow">${flow}<i>↺</i></div></section>
+    ${cards}
+    <button class="gadd" data-a="tcc-loop">${ic('plus', 20, 2.2)} Ajouter un exemple</button>`;
+}
+function tAsrsBody() {
+  const R = D.tcc.asrs.slice().sort((a, b) => b.at - a.at), last = R[0], prev = R[1];
+  let res = '';
+  if (last) {
+    const diff = prev ? last.total - prev.total : null;
+    res = `<section class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="stat"><b>${last.a}/6</b><span>Partie A · signes nets</span></div><div class="stat"><b>${last.total}/72</b><span>Score total · plus bas = mieux</span></div></section>
+      <p class="muted" style="margin:0;font-size:13px;line-height:1.45">${last.a >= 4 ? 'Partie A : 4 signes nets ou plus, profil très compatible avec un TDAH adulte.' : 'Partie A : moins de 4 signes nets.'}${diff !== null ? ` Score total : ${diff > 0 ? '+' : ''}${diff} point${Math.abs(diff) > 1 ? 's' : ''} depuis le ${tLongDate(prev.date)}.` : ''}</p>`;
+  }
+  const hist = R.length ? `<section style="display:flex;flex-direction:column;gap:10px"><h2 class="h-sec">Historique</h2><div class="list">${R.map(r => `<div class="li"><span>${tLongDate(r.date)} · A ${r.a}/6 · <b>${r.total}/72</b></span><button class="act del" data-a="asrs-del" data-id="${r.id}">${S.asrsDel === r.id ? 'Confirmer' : 'Supprimer'}</button></div>`).join('')}</div></section>` : '';
+  return `<p class="muted" style="margin:0;font-size:14px;line-height:1.45">L'ASRS est le questionnaire de l'OMS sur les symptômes du TDAH chez l'adulte : 18 questions, environ 5 minutes. Ici, il ne sert pas à diagnostiquer mais à mesurer : on le passe en séance 0, puis à la fin du programme, pour voir si quelque chose a bougé.</p>
+    ${res}
+    <button class="btn-main" data-a="asrs-start">${R.length ? 'Repasser le questionnaire' : 'Passer le questionnaire'}</button>
+    ${hist}`;
+}
+function vAsrs() {
+  const Q = S.asrs, i = Q.i, n = ASRS_Q.length, first = !D.tcc.asrs.length;
+  return `<main class="asrs">
+    <div class="between"><button class="icon-btn" data-a="asrs-back" aria-label="${i ? 'Question précédente' : 'Quitter'}">${ic('back', 22, 2)}</button>
+      <span class="muted" style="font-size:14px">${i + 1} / ${n} · ${i < 6 ? 'Partie A' : 'Partie B'}</span>
+      <button class="link" data-a="asrs-quit">Quitter</button></div>
+    <div class="aprog"><i style="width:${(i / n * 100).toFixed(1)}%"></i></div>
+    <span class="eyebrow">${first ? 'Sur les 6 derniers mois' : 'Depuis ton dernier questionnaire'}</span>
+    <p class="q">${esc(ASRS_Q[i])}</p>
+    <div class="aopts">${ASRS_L.map((l, v) => `<button data-a="asrs-ans" data-v="${v}" class="${Q.ans[i] === v ? 'on' : ''}">${l}${Q.ans[i] === v ? ic('check', 18, 2.6) : ''}</button>`).join('')}</div>
+  </main>`;
+}
+
+/* --- feuilles --- */
+function shTccHw() {
+  const T = D.tcc;
+  return `<h2 style="font-size:22px">Devoir de la semaine</h2>
+    <p class="muted" style="margin:0;font-size:14px">Un seul devoir, petit et concret. ${T.hw ? 'Modifier le texte garde la semaine en cours.' : "La semaine démarre aujourd'hui."}</p>
+    <div class="field"><label for="thw">Le devoir</label><textarea class="input" id="thw" data-autofocus>${esc(T.hw ? T.hw.text : '')}</textarea></div>
+    <button class="btn-main" data-a="tcc-hw-save">Enregistrer</button>
+    ${T.hw ? `<button class="btn-soft" data-a="tcc-hw-restart">Recommencer la semaine aujourd'hui</button><button class="btn-danger" data-a="tcc-hw-del">Retirer le devoir</button>` : ''}`;
+}
+function tlCap() { const d = S.sheet.draft; ['seen', 'hw', 'res'].forEach(f => { const v = input('tl_' + f); if (v !== undefined) d[f] = v; }); }
+function shTccLog() {
+  const G = S.sheet, d = G.draft;
+  const ta = (f, l, ph, h) => `<div class="field"><label for="tl_${f}">${l}</label><textarea class="input" id="tl_${f}" placeholder="${esc(ph)}" style="min-height:${h}px">${esc(d[f])}</textarea></div>`;
+  return `<h2 style="font-size:22px">${G.id ? `Séance ${d.n} · ${tLongDate(d.date)}` : 'Noter une séance'}</h2>
+    <div class="between"><span class="lab">Séance n°</span><div class="stepper"><button data-a="tlog-n" data-n="-1" aria-label="Moins">−</button><b>${d.n}</b><button data-a="tlog-n" data-n="1" aria-label="Plus">+</button></div></div>
+    ${ta('seen', "Ce qu'on a vu", 'La compétence, les exemples, ce qui est ressorti', 80)}
+    ${ta('hw', 'Le devoir', 'Un seul devoir, petit et concret', 64)}
+    ${ta('res', 'Résultat', 'À remplir à la séance suivante : ce qui a marché, ce qui a coincé', 64)}
+    <div class="chips"><button class="chip ${d.setHw ? 'on' : ''}" data-a="tlog-sethw">${d.setHw ? '✓ ' : ''}En faire le devoir de la semaine</button></div>
+    <button class="btn-main" data-a="tlog-save">Enregistrer</button>
+    ${G.id ? `<button class="btn-danger" data-a="tlog-del">${G.confirm ? 'Confirmer la suppression' : 'Supprimer cette séance'}</button>` : ''}`;
+}
+function shTccRules() {
+  const R = D.tcc.rules;
+  return `<h2 style="font-size:22px">Nos règles</h2>
+    ${TRULES.map(([f, l, ph], i) => `<div class="field"><label for="tr_${f}">${l}</label><textarea class="input" id="tr_${f}" placeholder="${esc(ph)}" style="min-height:64px" ${i === 0 ? 'data-autofocus' : ''}>${esc(R[f] || '')}</textarea></div>`).join('')}
+    <button class="btn-main" data-a="trules-save">Enregistrer</button>`;
+}
+function tbCap() { const d = S.sheet.draft, n = input('tb_ex'); if (n !== undefined) d.ex = n; TSTAGES.forEach(([f]) => { const v = input('tb_' + f); if (v !== undefined) d[f] = v; }); }
+function shTccLoop() {
+  const G = S.sheet, d = G.draft;
+  return `<h2 style="font-size:22px">${G.id ? 'Ma boucle' : 'Nouvel exemple'}</h2>
+    <div class="field"><label for="tb_ex">L'exemple</label><input class="input" id="tb_ex" value="${esc(d.ex)}" placeholder="Ex. Le permis" ${G.id ? '' : 'data-autofocus'}></div>
+    ${TSTAGES.map(([f, l, c, , ph]) => `<div class="field"><label for="tb_${f}"><i class="qdot" style="background:${c}"></i>${l}</label><textarea class="input" id="tb_${f}" placeholder="${esc(ph)}" style="min-height:70px">${esc(d[f])}</textarea></div>`).join('')}
+    <button class="btn-main" data-a="tloop-save">Enregistrer</button>
+    ${G.id ? `<button class="btn-danger" data-a="tloop-del">${G.confirm ? 'Confirmer la suppression' : 'Supprimer cet exemple'}</button>` : ''}`;
+}
+
+const TCC_ACTIONS = {
+  ttab: el => { S.ttab = el.dataset.v; S.asrsDel = null; render(); },
+  'tcc-day': el => { const h = D.tcc.hw, k = el.dataset.k; if (!h) return; if (h.days[k]) delete h.days[k]; else h.days[k] = true; save(); render(); },
+  'tcc-hw': () => openSheet({ type: 'tcchw' }),
+  'tcc-hw-save': () => {
+    const t = (input('thw') || '').trim(), T = D.tcc;
+    if (!t) T.hw = null; else if (T.hw) T.hw.text = t; else T.hw = { text: t, since: todayKey(), days: {} };
+    save(); closeSheet(); render(); if (t) toast('Devoir enregistré');
+  },
+  'tcc-hw-restart': () => { const t = (input('thw') || '').trim() || D.tcc.hw.text; D.tcc.hw = { text: t, since: todayKey(), days: {} }; save(); closeSheet(); render(); toast("Nouvelle semaine à partir d'aujourd'hui"); },
+  'tcc-hw-del': () => { D.tcc.hw = null; save(); closeSheet(); render(); },
+  'tcc-sess': el => { const T = D.tcc; T.session = Math.max(0, Math.min(12, T.session + Number(el.dataset.n))); save(); render(); },
+  'tcc-log': el => {
+    const e = el.dataset.id ? D.tcc.log.find(x => x.id === el.dataset.id) : null;
+    openSheet({ type: 'tcclog', id: e ? e.id : null, draft: e ? { ...e, setHw: false } : { date: todayKey(), n: D.tcc.session, seen: '', hw: '', res: '', setHw: true } });
+  },
+  'tlog-n': el => { tlCap(); const d = S.sheet.draft; d.n = Math.max(0, Math.min(12, d.n + Number(el.dataset.n))); renderSheet(); },
+  'tlog-sethw': () => { tlCap(); S.sheet.draft.setHw = !S.sheet.draft.setHw; renderSheet(); },
+  'tlog-save': () => {
+    tlCap(); const G = S.sheet, d = G.draft, T = D.tcc;
+    const rec = { date: d.date, n: d.n, seen: d.seen.trim(), hw: d.hw.trim(), res: d.res.trim() };
+    if (!rec.seen && !rec.hw && !rec.res) { toast('Écris au moins une ligne'); return; }
+    if (G.id) Object.assign(T.log.find(x => x.id === G.id), rec); else T.log.push({ id: 'l' + uid(), ...rec });
+    if (d.n > T.session) T.session = d.n;
+    if (d.setHw && rec.hw && !(T.hw && T.hw.text === rec.hw)) T.hw = { text: rec.hw, since: todayKey(), days: {} };
+    save(); closeSheet(); render(); toast('Séance enregistrée');
+  },
+  'tlog-del': () => { if (!S.sheet.confirm) { tlCap(); S.sheet.confirm = true; renderSheet(); return; } D.tcc.log = D.tcc.log.filter(x => x.id !== S.sheet.id); save(); closeSheet(); render(); },
+  'tcc-rules': () => openSheet({ type: 'tccrules' }),
+  'trules-save': () => { TRULES.forEach(([f]) => { D.tcc.rules[f] = (input('tr_' + f) || '').trim(); }); save(); closeSheet(); render(); toast('Règles enregistrées'); },
+  'tcc-loop': el => {
+    const b = el.dataset.id ? D.tcc.loop.find(x => x.id === el.dataset.id) : null;
+    openSheet({ type: 'tccloop', id: b ? b.id : null, draft: b ? { ...b } : { ex: '', diff: '', fail: '', thought: '', avoid: '' } });
+  },
+  'tloop-save': () => {
+    tbCap(); const G = S.sheet, d = G.draft; if (!d.ex.trim()) { toast("Donne un nom à l'exemple"); return; }
+    const rec = { ex: d.ex.trim() }; TSTAGES.forEach(([f]) => { rec[f] = (d[f] || '').trim(); });
+    if (G.id) Object.assign(D.tcc.loop.find(x => x.id === G.id), rec); else D.tcc.loop.push({ id: 'x' + uid(), ...rec });
+    save(); closeSheet(); render();
+  },
+  'tloop-del': () => { if (!S.sheet.confirm) { tbCap(); S.sheet.confirm = true; renderSheet(); return; } D.tcc.loop = D.tcc.loop.filter(x => x.id !== S.sheet.id); save(); closeSheet(); render(); },
+  'asrs-start': () => { S.asrs = { i: 0, ans: [] }; S.view = 'asrs'; render(); },
+  'asrs-ans': el => {
+    const Q = S.asrs; if (!Q || Q.busy) return; Q.ans[Q.i] = Number(el.dataset.v); Q.busy = true; render();
+    setTimeout(() => {
+      Q.busy = false;
+      if (Q.i < ASRS_Q.length - 1) { Q.i++; render(); return; }
+      const sc = asrsScore(Q.ans);
+      D.tcc.asrs.push({ id: 'q' + uid(), at: Date.now(), date: todayKey(), ans: Q.ans.slice(), a: sc.a, total: sc.total });
+      save(); S.asrs = null; S.view = 'tcc'; S.ttab = 'asrs'; render(); toast('Questionnaire enregistré');
+    }, 220);
+  },
+  'asrs-back': () => { const Q = S.asrs; if (Q && Q.i > 0) { Q.i--; render(); } else A['asrs-quit'](); },
+  'asrs-quit': () => { S.asrs = null; S.view = 'tcc'; render(); },
+  'asrs-del': el => {
+    if (S.asrsDel !== el.dataset.id) { S.asrsDel = el.dataset.id; render(); return; }
+    D.tcc.asrs = D.tcc.asrs.filter(x => x.id !== el.dataset.id); S.asrsDel = null; save(); render();
+  },
+};
+
 const A = {
   nav: el => { S.view = el.dataset.v; render(); },
   fab: () => openSheet({ type: 'add' }),
@@ -2087,7 +2373,7 @@ const A = {
   copy: () => { try { navigator.clipboard.writeText(JSON.stringify(D)).then(() => toast('Données copiées'), () => toast('Copie refusée')); } catch (e) { toast('Copie impossible ici'); } },
 };
 
-Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, GOAL_ACTIONS);
+Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-a]'); if (!el) return;

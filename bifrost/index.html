@@ -1968,6 +1968,8 @@ function adopt(files, remoteHead, remoteFiles) {
   SY.norm = Vault.serialize(pr.D, { prevFm: pr.prevFm, created: pr.created, dayKeys: pr.dayKeys });
   // les notes absentes du coffre restent absentes de la référence
   for (const p of Object.keys(SY.norm)) if (!(p in remoteFiles)) delete SY.norm[p];
+  // une note encore à l'ancien format (bloc de données) est réécrite au nouveau à la prochaine synchro
+  for (const p of Object.keys(SY.norm)) if (remoteFiles[p] && /```json/.test(remoteFiles[p]) && !/```json/.test(SY.norm[p])) SY.norm[p] = remoteFiles[p];
 }
 async function syncPull() {
   if (!SY.user || SY.pulling) return; SY.pulling = true;
@@ -1980,7 +1982,8 @@ async function syncPull() {
     for (const p of paths) {
       const lc = local[p] !== SY.norm[p], rc = remote[p] !== SY.remote[p];
       let v;
-      if (first) v = p in remote ? remote[p] : local[p];
+      // première connexion d'un appareil : La Serre fait foi, les exemples de l'app ne remontent pas
+      if (first) v = Object.keys(remote).length ? remote[p] : local[p];
       else if (!lc) v = remote[p];
       else if (!rc) v = local[p];
       else if (p.includes('/Jours/')) v = local[p] !== undefined ? local[p] : remote[p];

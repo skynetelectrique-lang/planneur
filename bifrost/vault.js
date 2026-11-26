@@ -23,6 +23,9 @@
     [4, '🌙 Plus tard', 'ni urgent ni important'],
     [0, '📥 À classer', ''],
   ];
+  const TLOG = [['seen', 'Ce qu\'on a vu'], ['hw', 'Le devoir'], ['res', 'Le résultat']];
+  const TLOOP = [['diff', 'Difficulté'], ['fail', 'Ce qui a raté'], ['thought', 'La pensée qui a suivi'], ['avoid', 'Ce que j\'ai évité ensuite']];
+  const TRULE = [['rythme', 'Rythme des séances'], ['decroche', 'Si je décroche'], ['medecin', 'Quand j\'appelle un médecin'], ['femme', 'Ma femme dans le programme']];
   const JQ = [['win', "Une chose réussie aujourd'hui"], ['grat', 'Merci pour…'], ['note', 'Note libre']];
   // Données gardées seulement sur l'appareil (jamais dans le coffre)
   const LOCAL_ONLY = ['timer'];
@@ -252,15 +255,31 @@
     if (D.favs) put(`${BASE}/Favoris.md`, keep(`${BASE}/Favoris.md`, { type: 'favoris' }),
       `# Favoris\n\n> [!conseil] Sous la main dans Bifröst\n> Une note par ligne, en lien Obsidian. Elles s'affichent dans l'onglet La Serre de Bifröst.\n\n${D.favs.map(f => `- [[${f}]]`).join('\n')}\n`);
 
-    /* --- TCC --- */
+    /* --- TCC (lisible et modifiable dans Obsidian) --- */
     if (D.tcc) {
-      const t = D.tcc;
-      let body = `# Carnet TCC\n\n> [!conseil] Lecture seule\n> Cette note est tenue par Bifröst. Les modifications se font dans l'app (onglet TCC).\n\n`;
-      body += `**Séance en cours** : ${t.session ?? 0}\n\n`;
-      if (t.hw) body += `## Le devoir de la semaine\n\n${safeText(t.hw.text || t.hw.title || '')}\n\n`;
-      if ((t.log || []).length) body += `## Journal des séances\n\n${t.log.map(l => `- **${l.date || ''}** · séance ${l.n} : ${(l.seen || '').replace(/\n/g, ' ')}${l.hw ? ` · devoir : ${l.hw.replace(/\n/g, ' ')}` : ''}${l.res ? ` · résultat : ${l.res.replace(/\n/g, ' ')}` : ''}`).join('\n')}\n\n`;
-      body += `> [!compost]- Données de l'app\n> \`\`\`json\n${JSON.stringify(t, null, 1).split('\n').map(l => '> ' + l).join('\n')}\n> \`\`\`\n`;
-      put(`${BASE}/TCC.md`, keep(`${BASE}/TCC.md`, { type: 'tcc' }), body);
+      const t = D.tcc, hw = t.hw;
+      const fm = keep(`${BASE}/TCC.md`, {
+        type: 'tcc', séance: t.session ?? 0,
+        'devoir depuis': hw ? hw.since : undefined,
+        'devoir fait': hw ? Object.keys(hw.days || {}).filter(k => hw.days[k]).sort() : undefined,
+        données: extra(t, ['session', 'hw', 'log', 'loop', 'asrs', 'rules']),
+      });
+      let body = `# Carnet TCC\n\n> [!conseil] Modifiable ici ou dans Bifröst\n> Garde les titres tels quels : Bifröst s'en sert pour relire la note.\n`;
+      body += `\n## 📌 Le devoir de la semaine\n\n${hw ? safeText(hw.text) : ''}\n`;
+      body += `\n## 📓 Journal des séances\n`;
+      (t.log || []).forEach(l => {
+        body += `\n### ${l.date || 'Sans date'} · séance ${l.n ?? 0}\n`;
+        TLOG.forEach(([f, lab]) => { if ((l[f] || '').trim()) body += `\n#### ${lab}\n${safeText(l[f])}\n`; });
+      });
+      body += `\n## 🔁 Ma boucle\n`;
+      (t.loop || []).forEach(x => {
+        body += `\n### ${(x.ex || 'Exemple').replace(/\n/g, ' ')}\n`;
+        TLOOP.forEach(([f, lab]) => { if ((x[f] || '').trim()) body += `\n#### ${lab}\n${safeText(x[f])}\n`; });
+      });
+      body += `\n## 🤝 Nos règles\n`;
+      TRULE.forEach(([f, lab]) => { body += `\n### ${lab}\n${safeText((t.rules || {})[f] || '')}\n`; });
+      body += `\n## 📏 Mesure ASRS\n\n${(t.asrs || []).map(q => `- ${q.date || ''} · total ${q.total ?? ''} · partie A ${q.a ?? ''} · réponses ${(q.ans || []).join(' ')}`).join('\n')}\n`;
+      put(`${BASE}/TCC.md`, fm, body);
     }
 
     /* --- Réglages (le reste) --- */
@@ -446,7 +465,31 @@
 
     /* --- TCC --- */
     const tcc = one('TCC');
-    if (tcc) { const t = jsonBlock(tcc.body); if (t) D.tcc = t; }
+    if (tcc) {
+      const old = jsonBlock(tcc.body);
+      if (old) D.tcc = old;   // ancien format (bloc de données)
+      else {
+        const f = tcc.fm, secs = sections(tcc.body);
+        const byLab = (sub, defs) => { const o = {}; defs.forEach(([k, lab]) => { o[k] = sub[lab] !== undefined ? unsafeText(sub[lab]) : ''; }); return o; };
+        const t = { ...unextra(f.données), session: Number(f.séance) || 0, hw: null, log: [], loop: [], asrs: [], rules: {} };
+        const hwTxt = unsafeText(findSec(secs, 'devoir') || '');
+        if (hwTxt) {
+          const done = Array.isArray(f['devoir fait']) ? f['devoir fait'] : [];
+          t.hw = { text: hwTxt, since: f['devoir depuis'] ? String(f['devoir depuis']) : dkey(new Date()), days: Object.fromEntries(done.map(k => [String(k), true])) };
+        }
+        Object.entries(sections(findSec(secs, 'journal des séances') || '', 3)).forEach(([h, txt], i) => {
+          const m = h.match(/^(\S+)\s*·\s*séance\s*(\d+)/i);
+          t.log.push({ id: 'l' + i, date: m && isKey(m[1]) ? m[1] : '', n: m ? Number(m[2]) : 0, ...byLab(sections(txt, 4), TLOG) });
+        });
+        Object.entries(sections(findSec(secs, 'boucle') || '', 3)).forEach(([h, txt], i) => { t.loop.push({ id: 'x' + i, ex: h, ...byLab(sections(txt, 4), TLOOP) }); });
+        t.rules = byLab(sections(findSec(secs, 'règles') || '', 3), TRULE);
+        lines(findSec(secs, 'asrs') || '').split('\n').forEach((l, i) => {
+          const m = l.match(/^- (\S*) · total (\d*) · partie A (\d*) · réponses ([\d ]*)$/);
+          if (m) { const d = isKey(m[1]) ? fromKey(m[1]) : new Date(); d.setHours(12); t.asrs.push({ id: 'q' + i, at: d.getTime(), date: m[1], ans: m[4].trim().split(/\s+/).filter(Boolean).map(Number), a: Number(m[3]), total: Number(m[2]) }); }
+        });
+        D.tcc = t;
+      }
+    }
 
     return { D, prevFm, created, dayKeys: inDir('Jours').map(n => stem(n.p)).filter(isKey) };
   }

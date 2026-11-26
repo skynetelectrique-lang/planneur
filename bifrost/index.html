@@ -157,13 +157,22 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
   .dgrid{columns:2 340px}
 }
 @media (min-width:1100px){ .dgrid{columns:3 320px} }
-#ptr{position:fixed;left:50%;top:calc(var(--safe-top) + 6px);z-index:30;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid rgba(90,169,255,.25);color:var(--muted);display:flex;align-items:center;justify-content:center;opacity:0;transform:translate(-50%,-50px);pointer-events:none;transition:opacity .15s;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-#ptr.ready{color:var(--aqua);border-color:var(--aqua)}
-#ptr.spin{color:var(--aqua);animation:ptrspin .8s linear infinite;transform:translate(-50%,24px)!important}
-@keyframes ptrspin{to{rotate:360deg}}
-.icon-btn.spin svg{animation:ptrspin .8s linear infinite}
 #sidesync{display:none}
 @media (min-width:620px){ #sidesync{display:flex;position:fixed;top:calc(var(--safe-top) + 30px);left:calc(50% + 256px);z-index:20} #sidesync[hidden]{display:none} }
+#aurora{position:fixed;left:0;right:0;top:0;height:calc(var(--safe-top) + 120px);z-index:40;pointer-events:none;overflow:hidden;opacity:calc(var(--k,0) * .95);transition:opacity .45s ease;
+  -webkit-mask-image:linear-gradient(#000 0%,rgba(0,0,0,.75) 45%,transparent 100%);mask-image:linear-gradient(#000 0%,rgba(0,0,0,.75) 45%,transparent 100%)}
+#aurora i{position:absolute;left:-30%;right:-30%;top:calc(-60px + var(--k,0) * 40px);height:150px;filter:blur(18px);border-radius:50%;
+  background:linear-gradient(90deg,transparent 0%,#5FE0A6 14%,#3CCFC0 30%,#5AA9FF 50%,#9A7CF0 68%,#D46FB0 84%,transparent 100%);background-size:200% 100%;
+  transform:scaleY(calc(.35 + var(--k,0) * .65)) skewX(-8deg);transform-origin:top;transition:transform .2s ease,top .2s ease}
+#aurora i:nth-child(2){top:calc(-80px + var(--k,0) * 55px);opacity:.55;filter:blur(26px);background-position:60% 0;transform:scaleY(calc(.3 + var(--k,0) * .7)) skewX(10deg)}
+#aurora i:nth-child(3){top:calc(-70px + var(--k,0) * 30px);opacity:.4;height:110px;background:linear-gradient(90deg,transparent,#9A7CF0 25%,#5FE0A6 55%,#5AA9FF 80%,transparent);background-size:200% 100%}
+#aurora.ready{--k:1.08}
+#aurora.live i{animation:aurflow 3.2s ease-in-out infinite alternate, aurwave 2.4s ease-in-out infinite}
+#aurora.live i:nth-child(2){animation-duration:4.4s,3.1s;animation-direction:alternate-reverse,normal}
+#aurora.live i:nth-child(3){animation-duration:5.2s,2.7s}
+@keyframes aurflow{from{background-position:0% 0}to{background-position:100% 0}}
+@keyframes aurwave{0%,100%{opacity:.95;margin-top:0}50%{opacity:.6;margin-top:10px}}
+@media (prefers-reduced-motion:reduce){#aurora.live i{animation:none}}
 /* nav */
 .nav{position:fixed;left:50%;transform:translateX(-50%);width:min(456px,calc(100% - 24px));bottom:calc(var(--safe-bottom) + 12px);height:72px;background:var(--card);border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.24);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;z-index:20}
 .nav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;letter-spacing:-.015em;white-space:nowrap;color:var(--muted);min-height:48px;justify-content:center}
@@ -729,7 +738,6 @@ function render() {
   let rb = document.getElementById('sidesync');
   if (!rb) { rb = document.createElement('button'); rb.id = 'sidesync'; rb.className = 'icon-btn'; rb.setAttribute('aria-label', 'Rafraîchir'); rb.dataset.a = 'side-refresh'; rb.innerHTML = ic('refresh', 20, 1.9); document.body.appendChild(rb); }
   rb.hidden = S.view === 'serre' || PTR_OFF.includes(S.view);
-  rb.classList.toggle('spin', !!PTR.busy);
   app().innerHTML = html;
   renderSheet();
   if (prevView === S.view) window.scrollTo(0, scroll); else window.scrollTo(0, 0);
@@ -2412,18 +2420,18 @@ function vSerre() {
   const blocks = [dJournee(), dSemer(), dQuestion(N), dIdee(N), dLecture(N), dLecon(N), dPepiniere(N), dAvis(N), dBoite(N), dLiens()].filter(Boolean);
   return `<main class="screen kiosk">
     <header class="between"><div style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Ton jardin${!KIO.notes && KIO.loading ? ' · lecture…' : ''}</span><h1 class="h-title">La Serre</h1></div>
-      <button class="icon-btn ${PTR.busy ? 'spin' : ''}" data-a="dash-refresh" aria-label="Rafraîchir">${ic('refresh', 20, 1.9)}</button></header>
+      <button class="icon-btn" data-a="dash-refresh" aria-label="Rafraîchir">${ic('refresh', 20, 1.9)}</button></header>
     <div class="dgrid">${blocks.join('')}</div>
   </main>`;
 }
 /* Tirer vers le bas pour rafraîchir */
 const PTR = { y0: null, dy: 0, busy: false, el: null };
-function ptrShow(dy, spin) {
-  if (!PTR.el) { PTR.el = document.createElement('div'); PTR.el.id = 'ptr'; PTR.el.innerHTML = ic('refresh', 22, 2.2); document.body.appendChild(PTR.el); }
-  const d = Math.min(dy * 0.55, 70);
-  PTR.el.style.transform = `translate(-50%, ${d - 50}px) rotate(${dy * 2.2}deg)`;
-  PTR.el.style.opacity = dy > 4 ? Math.min(1, dy / 80) : 0;
-  PTR.el.classList.toggle('ready', dy > 90); PTR.el.classList.toggle('spin', !!spin);
+function ptrShow(dy, live) {
+  if (!PTR.el) { PTR.el = document.createElement('div'); PTR.el.id = 'aurora'; PTR.el.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(PTR.el); }
+  const k = live ? 1 : Math.min(1, dy / 90);
+  PTR.el.style.setProperty('--k', k.toFixed(3));
+  PTR.el.classList.toggle('ready', !live && dy > 90);
+  PTR.el.classList.toggle('live', !!live);
 }
 async function anyRefresh() {
   if (S.view === 'serre') return serreRefresh();
@@ -2447,8 +2455,8 @@ document.addEventListener('touchend', async () => {
   try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
 });
 const DASH_ACTIONS = {
-  'side-refresh': async () => { if (PTR.busy) return; PTR.busy = true; render(); try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; render(); } },
-  'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; render(); try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; render(); } },
+  'side-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
+  'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
   'dash-shuf': el => { const k = el.dataset.k; SHUF[k] = (SHUF[k] === undefined ? Math.floor(Math.random() * 997) : SHUF[k]) + 1; render(); },
   'avis-f': el => { S.avisF = S.avisF === el.dataset.e ? null : el.dataset.e; render(); },
   'idea-more': () => { S.ideaOpen = !S.ideaOpen; render(); },

@@ -2922,7 +2922,7 @@ if (!SY.user) S.view = 'login';
 render();
 setInterval(tickFocus, 1000);
 syncInit();
-if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) { } }
+if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(() => {}); } catch (e) { } }
 
 </script>
 </body>

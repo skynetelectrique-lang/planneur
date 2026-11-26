@@ -1,5 +1,5 @@
 /* Bifröst : fonctionnement hors ligne */
-const V = 'bifrost-v14';
+const V = 'bifrost-v15';
 const LOCAL = ['./', './index.html', './vault.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './fonts/uncial.woff2', './fonts/cinzel.woff2'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(LOCAL)).then(() => self.skipWaiting()));
@@ -12,7 +12,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || u.hostname === 'api.github.com') return;
   const fresh = req.mode === 'navigate' || u.pathname.endsWith('.html') || u.pathname.endsWith('/') || u.pathname.endsWith('.js');
   if (fresh) {
-    e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(V).then(x => x.put(req, c)); return r; })
+    // toujours demander au serveur s'il y a plus récent (sans se fier au cache de 10 min de GitHub Pages)
+    e.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(r => { const c = r.clone(); caches.open(V).then(x => x.put(req, c)); return r; })
       .catch(() => caches.match(req).then(r => r || caches.match('./index.html'))));
     return;
   }

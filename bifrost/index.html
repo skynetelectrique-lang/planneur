@@ -159,7 +159,7 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 @media (min-width:1100px){ .dgrid{columns:3 320px} }
 #sidesync{display:none}
 @media (min-width:620px){ #sidesync{display:flex;position:fixed;top:calc(var(--safe-top) + 30px);left:calc(50% + 256px);z-index:20} #sidesync[hidden]{display:none} }
-#aurora{position:fixed;left:0;right:0;top:0;height:calc(var(--safe-top) + 120px);z-index:40;pointer-events:none;overflow:hidden;opacity:calc(var(--k,0) * .95);transition:opacity .45s ease;
+#aurora{position:fixed;left:0;right:0;top:0;height:calc(var(--safe-top) + 120px);z-index:40;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .45s ease;-webkit-transform:translateZ(0);
   -webkit-mask-image:linear-gradient(#000 0%,rgba(0,0,0,.75) 45%,transparent 100%);mask-image:linear-gradient(#000 0%,rgba(0,0,0,.75) 45%,transparent 100%)}
 #aurora i{position:absolute;left:-30%;right:-30%;top:calc(-60px + var(--k,0) * 40px);height:150px;filter:blur(18px);border-radius:50%;
   background:linear-gradient(90deg,transparent 0%,#5FE0A6 14%,#3CCFC0 30%,#5AA9FF 50%,#9A7CF0 68%,#D46FB0 84%,transparent 100%);background-size:200% 100%;
@@ -2430,6 +2430,9 @@ function ptrShow(dy, live) {
   if (!PTR.el) { PTR.el = document.createElement('div'); PTR.el.id = 'aurora'; PTR.el.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(PTR.el); }
   const k = live ? 1 : Math.min(1, dy / 90);
   PTR.el.style.setProperty('--k', k.toFixed(3));
+  // transparence et hauteur calculées ici : certains Safari d'iPad ignorent calc() avec une variable
+  PTR.el.style.opacity = (live ? .95 : k * .95).toFixed(3);
+  PTR.el.querySelectorAll('i').forEach((el, n) => { el.style.transform = `scaleY(${(.35 + k * .65).toFixed(3)}) skewX(${n === 1 ? 10 : -8}deg)`; el.style.top = `${Math.round([-60, -80, -70][n] + k * [40, 55, 30][n])}px`; });
   PTR.el.classList.toggle('ready', !live && dy > 90);
   PTR.el.classList.toggle('live', !!live);
 }

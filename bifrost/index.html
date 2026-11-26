@@ -2418,6 +2418,11 @@ function ptrShow(dy, spin) {
   PTR.el.style.opacity = dy > 4 ? Math.min(1, dy / 80) : 0;
   PTR.el.classList.toggle('ready', dy > 90); PTR.el.classList.toggle('spin', !!spin);
 }
+async function anyRefresh() {
+  if (S.view === 'serre') return serreRefresh();
+  SY.err = ''; await syncPull();
+  if (!S.sheet) render(); toast(SY.err ? SY.err : 'À jour avec La Serre 🌿');
+}
 async function serreRefresh() {
   KIO.failed = null; SR.ideaErr = '';
   await syncPull();
@@ -2425,13 +2430,14 @@ async function serreRefresh() {
   if (SR.ideaPath) await loadIdea(SR.ideaPath);
   render(); toast('Jardin à jour 🌿');
 }
-document.addEventListener('touchstart', e => { if (S.view !== 'serre' || S.sheet || PTR.busy || window.scrollY > 2) return; PTR.y0 = e.touches[0].clientY; PTR.dy = 0; }, { passive: true });
+const PTR_OFF = ['run', 'breath', 'focus', 'login'];
+document.addEventListener('touchstart', e => { if (PTR_OFF.includes(S.view) || S.sheet || PTR.busy || window.scrollY > 2 || (e.target.closest && e.target.closest('input,textarea,select'))) return; PTR.y0 = e.touches[0].clientY; PTR.dy = 0; }, { passive: true });
 document.addEventListener('touchmove', e => { if (PTR.y0 === null) return; if (window.scrollY > 2) { PTR.y0 = null; ptrShow(0); return; } PTR.dy = Math.max(0, e.touches[0].clientY - PTR.y0); ptrShow(PTR.dy); }, { passive: true });
 document.addEventListener('touchend', async () => {
   if (PTR.y0 === null) return; const go = PTR.dy > 90; PTR.y0 = null;
   if (!go) { ptrShow(0); return; }
   PTR.busy = true; ptrShow(110, true);
-  try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
+  try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
 });
 const DASH_ACTIONS = {
   'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; render(); try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; render(); } },

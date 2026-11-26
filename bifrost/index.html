@@ -2433,6 +2433,8 @@ function ptrShow(dy, live) {
   PTR.el.classList.toggle('ready', !live && dy > 90);
   PTR.el.classList.toggle('live', !!live);
 }
+// l'aurore reste au moins 1,6 s, même quand la synchro est instantanée
+const withAurora = job => Promise.all([job, new Promise(r => setTimeout(r, 1600))]);
 async function anyRefresh() {
   if (S.view === 'serre') return serreRefresh();
   SY.err = ''; await syncPull();
@@ -2452,11 +2454,11 @@ document.addEventListener('touchend', async () => {
   if (PTR.y0 === null) return; const go = PTR.dy > 90; PTR.y0 = null;
   if (!go) { ptrShow(0); return; }
   PTR.busy = true; ptrShow(110, true);
-  try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
+  try { await withAurora(anyRefresh()); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
 });
 const DASH_ACTIONS = {
-  'side-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
-  'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
+  'side-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await withAurora(anyRefresh()); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
+  'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; ptrShow(0, true); try { await withAurora(serreRefresh()); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); } },
   'dash-shuf': el => { const k = el.dataset.k; SHUF[k] = (SHUF[k] === undefined ? Math.floor(Math.random() * 997) : SHUF[k]) + 1; render(); },
   'avis-f': el => { S.avisF = S.avisF === el.dataset.e ? null : el.dataset.e; render(); },
   'idea-more': () => { S.ideaOpen = !S.ideaOpen; render(); },

@@ -173,6 +173,37 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 @keyframes aurflow{from{background-position:0% 0}to{background-position:100% 0}}
 @keyframes aurwave{0%,100%{opacity:.95;margin-top:0}50%{opacity:.6;margin-top:10px}}
 @media (prefers-reduced-motion:reduce){#aurora.live i{animation:none}}
+.dlist button,.frow button{background:none;border:0;padding:0;font:inherit;text-align:left;width:100%;display:flex;align-items:center;gap:10px;min-height:42px;color:var(--ink);font-size:14px;cursor:pointer}
+.dlist>button{border-bottom:1px solid var(--line)}.dlist>button:last-child{border-bottom:0}
+button.wl{background:none;border:0;padding:0;font:inherit;color:var(--cyan);cursor:pointer;text-align:inherit}
+button.mini{background:none;border:0;padding:0;cursor:pointer}
+.pas textarea{min-height:64px}
+.pas.done p{font-size:15px}
+.pascard{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;border:1px solid rgba(95,224,166,.25);color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.pascard svg:first-child{color:var(--aqua)}.pascard span{flex:1}
+.search{display:flex;flex-direction:column;gap:10px}
+.sbox{position:relative}.sbox svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}.sbox input{padding-left:42px;width:100%}
+.sres{padding:4px 0;display:flex;flex-direction:column}
+.srow{background:none;border:0;border-bottom:1px solid var(--line);text-align:left;padding:12px 16px;display:flex;flex-direction:column;gap:3px;color:var(--ink);font:inherit;cursor:pointer}
+.srow:last-child{border-bottom:0}.srow .nm{font-weight:600;font-size:15px}.srow small{color:var(--muted);font-size:12px;line-height:1.4}
+.stats.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dw.sunday{border-color:rgba(154,124,240,.45)}
+#sheet .sheet:has(.reader){max-width:760px}
+.reader{display:flex;flex-direction:column;gap:12px}
+.reader-t{font-family:var(--serif);font-weight:700;font-size:22px;line-height:1.3;margin:0;color:#C9D8F2}
+.avisbar{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.avisbar button{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:58px;padding:8px 6px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:20px;cursor:pointer}
+.avisbar button span{font-size:10px;line-height:1.1;text-align:center}
+.avisbar button.on{border-color:var(--aqua);background:rgba(95,224,166,.12);color:var(--ink)}
+.avisbar button.busy{opacity:.5}
+.md.full{gap:10px}.md.full h3{font-size:17px}.md.full h4{font-size:15px;margin:4px 0 0;color:var(--cyan)}
+.md img{max-width:100%;border-radius:12px}.md .imgwait{display:block;height:120px;border-radius:12px;background:var(--chip)}
+.md pre{white-space:pre-wrap;background:var(--chip);padding:10px 12px;border-radius:12px;font-size:13px;margin:0}
+.md details.callout summary{cursor:pointer;font-weight:600;color:var(--muted)}
+.md hr{border:0;border-top:1px solid var(--line);width:100%}
+.md .tbl{overflow-x:auto}.md table{border-collapse:collapse;font-size:13px}.md td,.md th{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.md a{color:var(--cyan)}
+@media (min-width:1000px){ body.duoview #sidesync{left:auto;right:20px} body.duoview #app{max-width:1060px} .duo{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start} .duo .seg{display:none} }
 /* nav */
 .nav{position:fixed;left:50%;transform:translateX(-50%);width:min(456px,calc(100% - 24px));bottom:calc(var(--safe-bottom) + 12px);height:72px;background:var(--card);border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.24);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;z-index:20}
 .nav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;letter-spacing:-.015em;white-space:nowrap;color:var(--muted);min-height:48px;justify-content:center}
@@ -526,6 +557,7 @@ const P = {
   todo: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 4.5M3.5 12l1.5 1.5 2.5-3"/><circle cx="5.2" cy="18" r="1.3"/>',
   stop: '<rect x="7" y="7" width="10" height="10" rx="2"/>',
   tcc: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/><path d="M9 12.5l2 2 4-4.5"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
   refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   more: '<circle cx="5" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="19" cy="12" r=".6"/>',
 };
@@ -731,14 +763,20 @@ function render() {
   else if (S.view === 'run') html = vRun();
   else if (S.view === 'asrs') html = vAsrs();
   else {
-    html = { today: vToday, week: vWeek, serre: vSerre, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
+    const duo = (S.view === 'today' || S.view === 'week') && window.innerWidth >= 1000;
+    html = (duo ? `<div class="duo">${vToday()}${vWeek()}</div>` : { today: vToday, week: vWeek, serre: vSerre, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]()) + vNav();
+    document.body.classList.toggle('duoview', duo);
   }
   document.body.classList.toggle('wideview', S.view === 'serre');
+  if (!['today', 'week'].includes(S.view) || window.innerWidth < 1000) document.body.classList.remove('duoview');
   // bouton ⟳ dans la marge, pour l'ordinateur et l'iPad (l'onglet La Serre a le sien)
   let rb = document.getElementById('sidesync');
   if (!rb) { rb = document.createElement('button'); rb.id = 'sidesync'; rb.className = 'icon-btn'; rb.setAttribute('aria-label', 'Rafraîchir'); rb.dataset.a = 'side-refresh'; rb.innerHTML = ic('refresh', 20, 1.9); document.body.appendChild(rb); }
   rb.hidden = S.view === 'serre' || PTR_OFF.includes(S.view);
+  // garder le champ en cours de saisie (et son curseur) quand la page se redessine
+  const ae = document.activeElement, keep = ae && ae.id && app().contains(ae) && /^(INPUT|TEXTAREA)$/.test(ae.tagName) ? { id: ae.id, a: ae.selectionStart, b: ae.selectionEnd, v: ae.value } : null;
   app().innerHTML = html;
+  if (keep) { const n = document.getElementById(keep.id); if (n) { if (n.value !== keep.v && n.tagName === 'TEXTAREA') n.value = keep.v; n.focus({ preventScroll: true }); try { n.setSelectionRange(keep.a, keep.b); } catch (e) { } } }
   renderSheet();
   if (prevView === S.view) window.scrollTo(0, scroll); else window.scrollTo(0, 0);
   render.view = S.view;
@@ -747,7 +785,7 @@ function renderSheet() {
   let el = document.getElementById('sheet');
   if (!S.sheet) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'sheet'; document.body.appendChild(el); }
-  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, paste: shPaste, goal: shGoal, tcchw: shTccHw, tcclog: shTccLog, tccrules: shTccRules, tccloop: shTccLoop }[S.sheet.type];
+  const fn = { add: shAdd, one: shOne, habit: shHabit, theme: shTheme, books: shBooks, ex: shEx, settings: shSettings, hlog: shHlog, amb: shAmbSave, ambedit: shAmbEdit, todo: shTodo, lib: shLib, journal: shJournal, jhist: shJhist, prog: shProg, sess: shSess, note: shNote, reader: shReader, paste: shPaste, goal: shGoal, tcchw: shTccHw, tcclog: shTccLog, tccrules: shTccRules, tccloop: shTccLoop }[S.sheet.type];
   el.innerHTML = `<div class="scrim" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${fn()}</div></div>`;
   const auto = el.querySelector('[data-autofocus]');
   if (auto && !S.sheet._focused) { S.sheet._focused = true; setTimeout(() => auto.focus(), 60); }
@@ -813,6 +851,7 @@ function vToday() {
     </header>
     <div class="seg" role="tablist"><button role="tab" aria-selected="true" class="on">Jour</button><button role="tab" aria-selected="false" data-a="nav" data-v="week">Semaine</button></div>
     ${oneCard}
+    ${pasCard()}
     <section style="display:flex;flex-direction:column;gap:14px">
       <div class="between"><h2 class="h-sec">Routines du jour</h2><button class="link" data-a="nav" data-v="routines">Tout voir</button></div>
       <div class="hgrid">${tiles}<button class="htile add" data-a="hnew">${ic('plus', 26)}Ajouter</button></div>
@@ -2185,8 +2224,12 @@ async function ghRest(path, raw) {
 }
 const encPath = p => p.split('/').map(encodeURIComponent).join('/');
 async function serreIndex(force) {
-  if (!SY.user || SR.loading) return SR.idx;
+  if (!SY.user) return SR.idx;
+  if (SR.loading) return SR.idxPromise || SR.idx;   // déjà en route : on attend la même lecture
   if (SR.idx && !force && SR.idxHead === SY.head) return SR.idx;
+  return (SR.idxPromise = serreIndexLoad());
+}
+async function serreIndexLoad() {
   SR.loading = true;
   try {
     const t = await ghRest(`git/trees/${GH.branch}?recursive=1`);
@@ -2231,11 +2274,11 @@ function mdLite(text) {
   return out.join('');
 }
 const noteName = p => String(p).split('/').pop().replace(/\.md$/, '');
-async function seedGraine(text) {
+async function seedGraine(text, opts = {}) {
   const now = new Date(), k = dkey(now);
   let base = fname(text.split('\n')[0].replace(/https?:\/\/\S+/g, '').split(/\s+/).slice(0, 7).join(' ')) || `Graine du ${now.getDate()} ${MONTHS[now.getMonth()]}`;
   const url = (text.match(/https?:\/\/\S+/) || [])[0];
-  const body = `---\ntype: graine\ncréé: ${k}\navis:\n${url ? `lien: "${url}"\n` : ''}---\n\n${text.trim()}\n`;
+  const body = `---\ntype: graine\ncréé: ${k}\navis:\n${url ? `lien: "${url}"\n` : ''}${opts.idee ? `origine: pas du jour\ninspirée par: "[[${opts.idee.replace(/"/g, '')}]]"\n` : ''}---\n\n${text.trim()}\n`;
   for (let attempt = 0; attempt < 3; attempt++) {
     await syncPull();
     const idx = await serreIndex(true) || [];
@@ -2256,7 +2299,7 @@ const SERRE_ACTIONS = {
     const t = (input('seedtxt') || '').trim(); S.seedDraft = t;
     if (!t) { toast('Écris ta graine d\'abord'); return; }
     SR.seedBusy = true; render();
-    try { await seedGraine(t); S.seedDraft = ''; toast('Graine semée dans La Serre 🌱'); }
+    try { const r = await plantSeed(t); S.seedDraft = ''; if (r !== 'attente') toast('Graine semée dans La Serre 🌱'); }
     catch (e) { toast(navigator.onLine ? (e.message || 'Semis impossible') : 'Hors ligne : ta graine reste ici'); }
     SR.seedBusy = false; render();
   },
@@ -2312,7 +2355,7 @@ function pickOf(arr, salt) { if (!arr.length) return null; const k = todayKey() 
 const SHUF = {};
 function pick(arr, key) { const i = SHUF[key]; return i !== undefined && arr.length ? arr[i % arr.length] : pickOf(arr, key); }
 function coverImg(n, cls = 'cov') { const u = cover(n && n.couverture); return n && n.couverture ? `<div class="${cls}" ${u ? `style="background-image:url('${u}')"` : ''}></div>` : ''; }
-function openBtn(p, label = 'Ouvrir') { return `<a class="mini" href="${obsUrl(p)}">${label} ${ic('next', 14, 2)}</a>`; }
+function openBtn(p, label = 'Lire') { return `<button class="mini" data-a="read" data-p="${esc(p)}">${label} ${ic('next', 14, 2)}</button>`; }
 function block(cls, eyebrow, inner, extra = '') { return `<section class="card dblock ${cls}"><div class="between"><span class="eyebrow">${eyebrow}</span>${extra}</div>${inner}</section>`; }
 
 function dJournee() {
@@ -2339,7 +2382,7 @@ function dIdee(N) {
       ${SR.ideaErr ? `<p class="muted" style="margin:0">${esc(SR.ideaErr)}</p>` : !SR.idea ? `<p class="muted" style="margin:0">Cueillette en cours…</p>` : `
         <h3 class="idea-t">${esc(noteName(SR.ideaPath))}</h3>
         <div class="md ${S.ideaOpen ? '' : 'clip'}">${mdLite(SR.idea)}</div>
-        <div class="between"><button class="link" data-a="idea-more">${S.ideaOpen ? 'Replier' : 'Lire la suite'}</button>${openBtn(SR.ideaPath)}</div>`}
+        <div class="between"><button class="link" data-a="idea-more">${S.ideaOpen ? 'Replier' : 'Lire la suite'}</button>${openBtn(SR.ideaPath, 'Ouvrir')}</div>`}
     </section>`;
 }
 function dLecture(N) {
@@ -2367,9 +2410,9 @@ function dPepiniere(N) {
     const seen = L.filter(n => n.vue).length, rev = L.filter(n => n.maîtrise === 'à revoir').length;
     const last = L.filter(n => n.vue).sort((a, b) => String(b.vue).localeCompare(String(a.vue)) || (b.numéro || 0) - (a.numéro || 0))[0];
     const next = L.filter(n => !n.vue).sort((a, b) => (a.numéro || 999) - (b.numéro || 999))[0];
-    return `<div class="prow"><div class="between"><a class="ptitle" href="${obsUrl(p.p)}">${esc(name)}</a><span class="muted" style="font-size:12px">${seen}/${L.length}</span></div>
+    return `<div class="prow"><div class="between"><button class="ptitle wl" data-a="read" data-p="${esc(p.p)}">${esc(name)}</button><span class="muted" style="font-size:12px">${seen}/${L.length}</span></div>
       <div class="bar"><i style="width:${Math.round(seen / L.length * 100)}%;background:var(--aurore)"></i></div>
-      <span class="muted" style="font-size:12px">${next ? `Prochaine : <a href="${obsUrl(next.p)}">${esc(noteName(next.p))}</a>` : 'Tout est vu'}${rev ? ` · ${rev} à revoir` : ''}${last ? '' : ''}</span></div>`;
+      <span class="muted" style="font-size:12px">${next ? `Prochaine : <button class="wl" data-a="read" data-p="${esc(next.p)}">${esc(noteName(next.p))}</button>` : 'Tout est vu'}${rev ? ` · ${rev} à revoir` : ''}${last ? '' : ''}</span></div>`;
   }).join('');
   return rows ? block('dp', '🌿 La Pépinière', rows) : '';
 }
@@ -2381,7 +2424,7 @@ function dAvis(N) {
   const f = S.avisF && counts.some(c => c[0] === S.avisF) ? S.avisF : null;
   const list = withAvis.filter(n => !f || avisOf(n).some(a => a.startsWith(f))).slice(0, 8);
   return block('da', '🧺 Tes avis en attente', `<div class="tags">${counts.map(([e, c]) => `<button class="tag ${f === e ? 'on' : ''}" data-a="avis-f" data-e="${e}">${e} ${c}</button>`).join('')}</div>
-    <div class="dlist">${list.map(n => `<a href="${obsUrl(n.p)}"><span class="av">${esc(avisOf(n).map(a => a.split(' ')[0]).join(''))}</span><span class="nm">${esc(noteName(n.p))}</span></a>`).join('')}</div>
+    <div class="dlist">${list.map(n => `<button data-a="read" data-p="${esc(n.p)}"><span class="av">${esc(avisOf(n).map(a => a.split(' ')[0]).join(''))}</span><span class="nm">${esc(noteName(n.p))}</span></button>`).join('')}</div>
     <span class="muted" style="font-size:12px">Dis « ramasse les avis » à Claude quand tu veux qu'il s'en occupe.</span>`);
 }
 function dBoite(N) {
@@ -2389,13 +2432,13 @@ function dBoite(N) {
   const G = SR.idx ? SR.idx.filter(p => p.startsWith('00 Graines/')).map(p => ({ p })) : N.filter(n => n.p.startsWith('00 Graines/'));
   const T = N.filter(n => n.type === 'lecture' && n.statut === 'à trier' && (!SR.idx || SR.idx.includes(n.p)));
   return block('db', '🌱 Ta boîte', `<div class="stats"><div><b>${G.length}</b><span>graine${G.length > 1 ? 's' : ''}</span></div><div><b>${T.length}</b><span>lecture${T.length > 1 ? 's' : ''} à trier</span></div></div>
-    ${G.length ? `<div class="dlist">${G.slice(0, 5).map(n => `<a href="${obsUrl(n.p)}"><span class="nm">${esc(noteName(n.p))}</span></a>`).join('')}</div>` : ''}`);
+    ${G.length ? `<div class="dlist">${G.slice(0, 5).map(n => `<button data-a="read" data-p="${esc(n.p)}"><span class="nm">${esc(noteName(n.p))}</span></button>`).join('')}</div>` : ''}`);
 }
 function dSemer() {
   return `<section class="card seed dblock">
       <span class="eyebrow">🌱 Semer une graine</span>
       <textarea class="input" id="seedtxt" placeholder="Une idée, un lien, une envie…" rows="3">${esc(S.seedDraft || '')}</textarea>
-      <div class="between"><span class="muted" style="font-size:12px">Elle tombe dans 00 Graines.</span><button class="pill-btn seedbtn" data-a="seed" ${SR.seedBusy ? 'disabled' : ''}>${SR.seedBusy ? 'Semis…' : 'Semer'}</button></div>
+      <div class="between"><span class="muted" style="font-size:12px">${seedQ().length ? `${seedQ().length} en attente de réseau` : 'Elle tombe dans 00 Graines.'}</span><button class="pill-btn seedbtn" data-a="seed" ${SR.seedBusy ? 'disabled' : ''}>${SR.seedBusy ? 'Semis…' : 'Semer'}</button></div>
     </section>`;
 }
 function dLiens() {
@@ -2407,7 +2450,7 @@ function dLiens() {
       <span class="eyebrow">📂 Ouvrir dans Obsidian</span>
       <div class="sgrid">${short.map(([l, t, i]) => `<a class="stile" href="${obsUrl(t)}">${ic(i, 20, 1.8)}<span>${esc(l)}</span></a>`).join('')}</div>
       <div class="between" style="margin-top:6px"><span class="eyebrow">🔖 Favoris</span><button class="link" data-a="fav-edit">${S.favEdit ? 'Terminé' : 'Modifier'}</button></div>
-      ${favs.length ? `<div class="dlist">${favs.map((f, i) => `<div class="frow"><a href="${obsUrl(f)}"><span class="nm">${esc(noteName(f))}</span></a>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 16, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
+      ${favs.length ? `<div class="dlist">${favs.map((f, i) => `<div class="frow"><button data-a="read-link" data-n="${esc(f)}"><span class="nm">${esc(noteName(f))}</span></button>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 16, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
       ${S.favEdit || !favs.length ? `<input class="input" id="favq" placeholder="Chercher une note de La Serre…" value="${esc(SR.favQ)}" autocomplete="off">
         ${found.length ? `<div class="list">${found.map(p => `<button class="li addfav" data-a="fav-add" data-p="${esc(p)}"><span>${esc(noteName(p))}<small>${esc(p.split('/')[0])}</small></span>${ic('plus', 18, 2)}</button>`).join('')}</div>` : ''}` : ''}
     </section>`;
@@ -2417,11 +2460,12 @@ function vSerre() {
   if (SY.user && (!KIO.notes || KIO.head !== SY.head) && !KIO.loading && KIO.failed !== SY.head) setTimeout(() => loadKiosque(), 0);
   if (SY.user && (!SR.idx || SR.idxHead !== SY.head) && !SR.loading) setTimeout(() => serreIndex().then(() => S.view === 'serre' && !S.sheet && render()), 0);
   const N = KIO.notes || [];
-  const blocks = [dJournee(), dSemer(), dQuestion(N), dIdee(N), dLecture(N), dLecon(N), dPepiniere(N), dAvis(N), dBoite(N), dLiens()].filter(Boolean);
+  const blocks = [dJournee(), dPas(), dSemer(), dSemaine(), dQuestion(N), dIdee(N), dLecture(N), dLecon(N), dPepiniere(N), dAvis(N), dBoite(N), dLiens()].filter(Boolean);
   return `<main class="screen kiosk">
     <header class="between"><div style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Ton jardin${!KIO.notes && KIO.loading ? ' · lecture…' : ''}</span><h1 class="h-title">La Serre</h1></div>
       <button class="icon-btn" data-a="dash-refresh" aria-label="Rafraîchir">${ic('refresh', 20, 1.9)}</button></header>
-    <div class="dgrid">${blocks.join('')}</div>
+    ${dSearch()}
+    ${(S.sq || '').trim().length >= 2 ? '' : `<div class="dgrid">${blocks.join('')}</div>`}
   </main>`;
 }
 /* Tirer vers le bas pour rafraîchir */
@@ -2466,6 +2510,211 @@ const DASH_ACTIONS = {
   'avis-f': el => { S.avisF = S.avisF === el.dataset.e ? null : el.dataset.e; render(); },
   'idea-more': () => { S.ideaOpen = !S.ideaOpen; render(); },
 };
+
+/* ============ Lecteur, avis, pas du jour, recherche, semaine ============ */
+const AVIS_ALL = ['🔥 coup de cœur', '❤️ ça me parle', '🌱 à faire pousser', '🛠️ à tester', '🔍 à creuser', '🤔 à discuter', '🔁 à revoir', '😐 bof', '🍂 compost'];
+const TEXTS = {};
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function resolveNote(name) {
+  name = String(name || '').replace(/^\[\[|\]\]$/g, '').split('|')[0].split('#')[0].trim();
+  if (!name) return null;
+  if (name.includes('/')) return /\.\w+$/.test(name) && !name.endsWith('.md') ? null : name.replace(/\.md$/, '') + '.md';
+  const all = SR.idx || (KIO.notes || []).map(n => n.p);
+  const f = fold(name);
+  return all.find(p => fold(noteName(p)) === f) || null;
+}
+async function noteText(p, force) {
+  if (TEXTS[p] && !force) return TEXTS[p];
+  TEXTS[p] = await ghRest(`contents/${encPath(p)}?ref=${GH.branch}`, true);
+  return TEXTS[p];
+}
+function readerOpen(p) {
+  if (!p) { toast('Note introuvable dans La Serre'); return; }
+  openSheet({ type: 'reader', p, hist: S.sheet && S.sheet.type === 'reader' ? [...(S.sheet.hist || []), S.sheet.p] : [] });
+  noteText(p).then(() => { if (S.sheet && S.sheet.p === p) renderSheet(); }).catch(() => { if (S.sheet && S.sheet.p === p) { S.sheet.err = 'Impossible de lire la note.'; renderSheet(); } });
+}
+function noteAvis(text) {
+  const m = String(text || '').match(/^---\n([\s\S]*?)\n---/); if (!m) return [];
+  const b = m[1].match(/^avis:[ \t]*(.*)((?:\n[ \t]+- .*)*)/m); if (!b) return [];
+  if (b[1].trim()) return b[1].replace(/^\[|\]$/g, '').split(',').map(x => x.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  return b[2].split('\n').map(l => l.replace(/^[ \t]+- /, '').trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+}
+function withAvis(text, list) {
+  const block = list.length ? 'avis:\n' + list.map(a => `  - ${a}`).join('\n') : 'avis:';
+  const m = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!m) return `---\n${block}\n---\n${text}`;
+  let fm = m[1];
+  if (/^avis:/m.test(fm)) fm = fm.replace(/^avis:[ \t]*.*(?:\n[ \t]+- .*)*/m, block);
+  else fm = fm + '\n' + block;
+  return `---\n${fm}\n---` + text.slice(m[0].length);
+}
+/* Écrit un fichier de La Serre hors de 05 Bifröst (graine, avis), en se remettant à jour d'abord */
+async function writeSerre(path, makeText, headline) {
+  for (let i = 0; i < 3; i++) {
+    await syncPull();
+    const cur = makeText.length ? await noteText(path, true).catch(() => null) : null;
+    const text = makeText(cur);
+    try { SY.head = await commitFiles({ [path]: text }, [], headline); saveSyncState(); TEXTS[path] = text; return text; }
+    catch (e) { if (!(e && e.gh)) throw e; }
+  }
+  throw new Error('La Serre est occupée, réessaie.');
+}
+async function toggleAvis(p, label) {
+  const cur = noteAvis(TEXTS[p]);
+  const next = cur.includes(label) ? cur.filter(a => a !== label) : [...cur, label];
+  S.sheet.busy = label; renderSheet();
+  try {
+    await writeSerre(p, txt => { const now = noteAvis(txt); const want = cur.includes(label) ? now.filter(a => a !== label) : now.includes(label) ? now : [...now, label]; return withAvis(txt || '', want); }, `Avis : ${noteName(p)} ${label.split(' ')[0]}`);
+    const n = (KIO.notes || []).find(x => x.p === p); if (n) n.avis = noteAvis(TEXTS[p]);
+    toast(next.includes(label) ? `${label.split(' ')[0]} noté` : 'Avis retiré');
+  } catch (e) { toast(navigator.onLine ? (e.message || 'Avis impossible') : 'Hors ligne : réessaie plus tard'); }
+  if (S.sheet) { S.sheet.busy = null; renderSheet(); }
+}
+function mdFull(text) {
+  let t = String(text || '').replace(/\r/g, '').replace(/^---\n[\s\S]*?\n---\n?/, '').replace(/^# .*\n?/m, '');
+  const img = f => { const u = cover(f); return u ? `<img src="${u}" alt="">` : `<span class="imgwait"></span>`; };
+  const inline = s => esc(s)
+    .replace(/!\[\[([^\]|]+?\.(?:webp|png|jpe?g|gif))(?:\|[^\]]*)?\]\]/gi, (m, f) => img(f.split('/').pop()))
+    .replace(/!\[\[[^\]]*\]\]/g, '')
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (m, a, b) => `<button class="wl" data-a="read-link" data-n="${a}">${b}</button>`)
+    .replace(/\[\[([^\]]+)\]\]/g, (m, a) => `<button class="wl" data-a="read-link" data-n="${a}">${a.split('#')[0]}</button>`)
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const out = []; let list = null, call = null, table = null, code = null;
+  const flush = () => {
+    if (list) { out.push(`<${list.t}>${list.items.join('')}</${list.t}>`); list = null; }
+    if (table) { out.push(`<div class="tbl"><table>${table.map((r, i) => `<tr>${r.map(c => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join('')}</tr>`).join('')}</table></div>`); table = null; }
+    if (call) { const inner = `${call.body.join('')}`; out.push(call.fold ? `<details class="callout"><summary>${call.title || 'Détails'}</summary>${inner}</details>` : `<div class="callout">${call.title ? `<b>${call.title}</b>` : ''}${inner}</div>`); call = null; }
+  };
+  for (const l of t.split('\n')) {
+    if (code) { if (/^```/.test(l)) { out.push(`<pre>${esc(code.join('\n'))}</pre>`); code = null; } else code.push(l); continue; }
+    if (/^```/.test(l)) { flush(); code = []; continue; }
+    const c = l.match(/^> \[!\w+\]([-+]?) ?(.*)$/);
+    if (c) { flush(); call = { title: inline(c[2]), fold: c[1] === '-', body: [] }; continue; }
+    if (call && /^>/.test(l)) { const x = l.replace(/^> ?/, ''); if (/^```/.test(x)) continue; if (x.trim()) call.body.push(/^\s*[-*] /.test(x) ? `<p>• ${inline(x.replace(/^\s*[-*] (\[.\] )?/, ''))}</p>` : `<p>${inline(x)}</p>`); continue; }
+    if (/^\s*\|/.test(l)) { if (call || list) flush(); const cells = l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(x => x.trim().replace(/\\\|/g, '|')); if (cells.every(x => /^:?-{2,}:?$/.test(x))) continue; (table = table || []).push(cells); continue; }
+    const li = l.match(/^\s*(?:([-*])|(\d+)\.) (?:\[(.)\] )?(.*)$/);
+    if (li) { if (call || table) flush(); const t2 = li[2] ? 'ol' : 'ul'; if (list && list.t !== t2) flush(); list = list || { t: t2, items: [] }; list.items.push(`<li>${li[3] && li[3] !== ' ' ? '☑︎ ' : li[3] === ' ' ? '☐ ' : ''}${inline(li[4])}</li>`); continue; }
+    flush();
+    const h = l.match(/^(#{2,6}) (.*)$/);
+    if (h) out.push(`<h${Math.min(4, h[1].length + 1)}>${inline(h[2])}</h${Math.min(4, h[1].length + 1)}>`);
+    else if (/^---+$/.test(l.trim())) out.push('<hr>');
+    else if (l.trim()) out.push(`<p>${inline(l)}</p>`);
+  }
+  flush();
+  return out.join('');
+}
+function shReader() {
+  const sh = S.sheet, p = sh.p, txt = TEXTS[p], n = (KIO.notes || []).find(x => x.p === p) || {};
+  const mine = noteAvis(txt);
+  return `<div class="reader">
+    <div class="between">${(sh.hist || []).length ? `<button class="link" data-a="read-back">${ic('back', 16, 2)} Retour</button>` : `<span class="eyebrow">${esc(p.split('/')[0].replace(/^\d+ /, ''))}</span>`}<a class="mini" href="${obsUrl(p)}">Obsidian ${ic('next', 14, 2)}</a></div>
+    ${coverImg(n, 'cov wide')}
+    <h2 class="reader-t">${esc(noteName(p))}</h2>
+    ${txt === undefined ? `<p class="muted">${sh.err ? esc(sh.err) : 'Ouverture…'}</p>` : `
+      <div class="avisbar" role="group" aria-label="Ton avis">${AVIS_ALL.map(a => `<button class="${mine.includes(a) ? 'on' : ''} ${sh.busy === a ? 'busy' : ''}" data-a="avis-set" data-v="${esc(a)}" title="${esc(a)}" aria-pressed="${mine.includes(a)}">${a.split(' ')[0]}<span>${esc(a.slice(a.indexOf(' ') + 1))}</span></button>`).join('')}</div>
+      <div class="md full">${mdFull(txt)}</div>`}
+  </div>`;
+}
+
+/* --- Pas du jour --- */
+function dPas() {
+  const k = todayKey(), done = (D.pas || {})[k];
+  const idea = SR.ideaPath ? noteName(SR.ideaPath) : null;
+  if (done && done.graine) return `<section class="card dblock pas done"><span class="eyebrow">🌱 Ton pas du jour</span>
+    <p style="margin:0">Fait : <button class="wl" data-a="read-link" data-n="${esc(done.graine)}">${esc(done.graine)}</button></p>
+    ${done.idee ? `<span class="muted" style="font-size:13px">Inspiré par <button class="wl" data-a="read-link" data-n="${esc(done.idee)}">${esc(done.idee)}</button></span>` : ''}</section>`;
+  if (!idea) return '';
+  return `<section class="card dblock pas"><span class="eyebrow">🌱 Ton pas du jour</span>
+    <p class="muted" style="margin:0;font-size:14px">L'idée du jour te fait penser à quoi ?</p>
+    <button class="wl" style="text-align:left" data-a="read" data-p="${esc(SR.ideaPath)}">${esc(idea)}</button>
+    <textarea class="input" id="pastxt" rows="2" placeholder="Deux lignes suffisent…">${esc(S.pasDraft || '')}</textarea>
+    <div style="display:flex;justify-content:flex-end"><button class="pill-btn seedbtn" data-a="pas-go" ${SR.seedBusy ? 'disabled' : ''}>Faire un pas</button></div></section>`;
+}
+function pasCard() {
+  const k = todayKey(), done = (D.pas || {})[k];
+  return `<button class="card pascard" data-a="nav" data-v="serre">${ic('plant', 20, 1.9)}<span>${done && done.graine ? `Pas du jour fait : <b>${esc(done.graine)}</b>` : 'Ton pas du jour t\'attend dans La Serre'}</span>${ic('next', 16, 2)}</button>`;
+}
+
+/* --- Recherche --- */
+const STYPES = [['', 'Tout'], ['permanente', 'Idées'], ['lecture', 'Lectures'], ['leçon', 'Leçons'], ['question', 'Questions'], ['carte', 'Cartes'], ['projet', 'Projets'], ['graine', 'Graines']];
+function dSearch() {
+  const q = fold(S.sq || '').trim(), ty = S.sty || '';
+  let res = [];
+  if (q.length >= 2 && KIO.notes) {
+    const words = q.split(/\s+/);
+    res = KIO.notes.filter(n => (!ty || n.type === ty || (ty === 'graine' && n.p.startsWith('00 Graines/'))) && !n.p.startsWith('_'))
+      .map(n => { const t = fold(noteName(n.p)), e = fold(n.ex); const ok = words.every(w => t.includes(w) || e.includes(w)); return ok ? { n, s: words.filter(w => t.includes(w)).length * 2 + (t.startsWith(words[0]) ? 1 : 0) } : null; })
+      .filter(Boolean).sort((a, b) => b.s - a.s).slice(0, 25).map(x => x.n);
+  }
+  return `<div class="search">
+    <div class="sbox">${ic('search', 18, 2)}<input id="sq" class="input" type="search" placeholder="Chercher dans La Serre…" value="${esc(S.sq || '')}" autocomplete="off"></div>
+    ${q.length >= 2 ? `<div class="tags">${STYPES.map(([v, l]) => `<button class="tag ${ty === v ? 'on' : ''}" data-a="sty" data-v="${v}">${l}</button>`).join('')}</div>
+      <div class="card sres">${res.length ? res.map(n => `<button class="srow" data-a="read" data-p="${esc(n.p)}"><span class="nm">${esc(noteName(n.p))}</span><small>${esc((n.type || n.p.split('/')[0]))}${n.ex ? ' · ' + esc(n.ex.slice(0, 90)) : ''}</small></button>`).join('') : `<p class="muted" style="margin:0;padding:14px">Rien trouvé${KIO.notes ? '' : ' (lecture du jardin…)'}.</p>`}</div>` : ''}
+  </div>`;
+}
+
+/* --- Graines en attente (hors ligne) --- */
+const SEEDQ = 'bifrost.seedq';
+const seedQ = () => { try { return JSON.parse(localStorage.getItem(SEEDQ) || '[]'); } catch (e) { return []; } };
+const setSeedQ = q => { try { localStorage.setItem(SEEDQ, JSON.stringify(q)); } catch (e) { } };
+async function flushSeeds() {
+  if (!SY.user || !navigator.onLine || flushSeeds.busy) return;
+  let q = seedQ(); if (!q.length) return;
+  flushSeeds.busy = true;
+  try { while (q.length) { await seedGraine(q[0].text, q[0].opts || {}); q = q.slice(1); setSeedQ(q); } toast('Graines en attente semées 🌱'); }
+  catch (e) { } finally { flushSeeds.busy = false; if (S.view === 'serre' && !S.sheet) render(); }
+}
+window.addEventListener('online', () => setTimeout(flushSeeds, 1500));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(flushSeeds, 3000); });
+async function plantSeed(text, opts) {
+  if (!navigator.onLine) { setSeedQ([...seedQ(), { text, opts, at: Date.now() }]); toast('Hors ligne : ta graine partira au retour du réseau'); return 'attente'; }
+  try { return await seedGraine(text, opts); }
+  catch (e) { if (e && e.auth) throw e; setSeedQ([...seedQ(), { text, opts, at: Date.now() }]); toast('La Serre injoignable : ta graine attend son tour'); return 'attente'; }
+}
+
+/* --- Ta semaine en bref --- */
+function dSemaine() {
+  const now = logicalNow(), ws = weekStart(now), keys = [];
+  for (let i = 0; i < 7; i++) { const d = addDays(ws, i); if (d <= now) keys.push(dkey(d)); }
+  const sunday = wd(now) === 6;
+  const perfect = keys.filter(k => { const p = dayProgress(k); return p.total && p.done >= p.total; }).length;
+  const ticks = keys.reduce((a, k) => a + dayProgress(k).done, 0), due = keys.reduce((a, k) => a + dayProgress(k).total, 0);
+  const ses = (D.sessions || []).filter(s => keys.includes(s.k));
+  const pas = keys.filter(k => (D.pas || {})[k] && D.pas[k].graine).length;
+  const done = (D.doneTodos || []).filter(d => keys.includes(d.doneAt)).length;
+  const seeds = (KIO.notes || []).filter(n => n.p.startsWith('00 Graines/') && keys.includes(String(n.créé))).length;
+  const best = D.habits.filter(h => !h.archived).map(h => [h, keys.filter(k => ((D.logs[k] || {})[h.id] || 0) >= (h.type === 'check' || h.type === 'measure' ? 1 : h.target)).length]).sort((a, b) => b[1] - a[1])[0];
+  const st = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return block('dw' + (sunday ? ' sunday' : ''), sunday ? '🗓️ Le tour du dimanche' : '🗓️ Ta semaine en bref', `
+    <div class="stats three">${st(due ? Math.round(ticks / due * 100) + ' %' : '–', 'routines tenues')}${st(perfect, `jour${perfect > 1 ? 's' : ''} parfait${perfect > 1 ? 's' : ''}`)}${st(ses.length, `séance${ses.length > 1 ? 's' : ''}${ses.length ? ' · ' + ses.reduce((a, s) => a + (s.dur || 0), 0) + ' min' : ''}`)}${st(pas, `pas du jour`)}${st(seeds, `graine${seeds > 1 ? 's' : ''} semée${seeds > 1 ? 's' : ''}`)}${st(done, `tâche${done > 1 ? 's' : ''} faite${done > 1 ? 's' : ''}`)}</div>
+    ${best && best[1] ? `<span class="muted" style="font-size:13px">La plus tenue : <b style="color:var(--ink)">${esc(best[0].name)}</b> (${best[1]}/${keys.length} j)</span>` : ''}`);
+}
+
+const MORE_ACTIONS = {
+  read: el => readerOpen(el.dataset.p),
+  'read-link': el => readerOpen(resolveNote(el.dataset.n)),
+  'read-back': () => { const h = [...(S.sheet.hist || [])]; const p = h.pop(); S.sheet = { type: 'reader', p, hist: h }; renderSheet(); },
+  'avis-set': el => { if (S.sheet && !S.sheet.busy && TEXTS[S.sheet.p] !== undefined) toggleAvis(S.sheet.p, el.dataset.v); },
+  sty: el => { S.sty = el.dataset.v; rerenderKeepFocus('sq'); },
+  'pas-go': async () => {
+    const t = (input('pastxt') || '').trim(); S.pasDraft = t;
+    if (!t) { toast('Écris ce que l\'idée t\'inspire'); return; }
+    const idee = SR.ideaPath ? noteName(SR.ideaPath) : '';
+    SR.seedBusy = true; render();
+    try {
+      const p = await plantSeed(t, { idee });
+      const name = p === 'attente' ? fname(t.split('\n')[0].split(/\s+/).slice(0, 7).join(' ')) : noteName(p);
+      D.pas = D.pas || {}; D.pas[todayKey()] = { idee, graine: name }; save();
+      S.pasDraft = ''; if (p !== 'attente') toast('Un pas de plus 🌱');
+    } catch (e) { toast(e.message || 'Impossible pour le moment'); }
+    SR.seedBusy = false; render();
+  },
+};
+document.addEventListener('input', ev => {
+  if (ev.target.id === 'sq') { S.sq = ev.target.value; rerenderKeepFocus('sq'); }
+  if (ev.target.id === 'pastxt') S.pasDraft = ev.target.value;
+});
 
 /* --- Journal : objectifs --- */
 const HORIZONS = [['mois', 'Ce mois-ci'], ['trim', 'Ce trimestre'], ['annee', 'Cette année'], ['libre', 'Sans échéance']];
@@ -2881,7 +3130,7 @@ const A = {
   copy: () => { try { navigator.clipboard.writeText(JSON.stringify(D)).then(() => toast('Données copiées'), () => toast('Copie refusée')); } catch (e) { toast('Copie impossible ici'); } },
 };
 
-Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, SERRE_ACTIONS, DASH_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
+Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, SERRE_ACTIONS, DASH_ACTIONS, MORE_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-a]'); if (!el) return;
@@ -2912,6 +3161,8 @@ document.addEventListener('keydown', ev => {
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { returnMissedFocus(); if (!S.sheet && S.view !== 'login') render(); syncPull(); } else if (D._dirty) syncPush(); });
 window.addEventListener('online', () => { if (D._dirty) syncPush(); else syncPull(); });
+let lastWide = window.innerWidth >= 1000;
+window.addEventListener('resize', () => { const w = window.innerWidth >= 1000; if (w !== lastWide) { lastWide = w; if (['today', 'week'].includes(S.view) && !S.sheet) render(); } });
 
 load(); if (!D.since) { D.since = todayKey(); save(); } returnMissedFocus();
 S.medit = initMedit();

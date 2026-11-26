@@ -30,7 +30,7 @@
   // Données gardées seulement sur l'appareil (jamais dans le coffre)
   const LOCAL_ONLY = ['timer'];
   // Champs rangés dans leurs propres notes
-  const HANDLED = ['habits', 'logs', 'measures', 'focus', 'journal', 'sessions', 'themes', 'backlog', 'doneTodos', 'programs', 'curProg', 'goals', 'books', 'notes', 'tcc', 'favs'];
+  const HANDLED = ['habits', 'logs', 'measures', 'focus', 'journal', 'sessions', 'themes', 'backlog', 'doneTodos', 'programs', 'curProg', 'goals', 'books', 'notes', 'tcc', 'favs', 'pas'];
 
   const inv = o => Object.fromEntries(Object.entries(o).map(([a, b]) => [b, a]));
   const pad = n => String(n).padStart(2, '0');
@@ -170,6 +170,7 @@
     Object.keys(D.logs || {}).forEach(k => keys.add(k));
     Object.keys(D.focus || {}).forEach(k => keys.add(k));
     Object.keys(D.journal || {}).forEach(k => keys.add(k));
+    Object.keys(D.pas || {}).forEach(k => keys.add(k));
     (D.sessions || []).forEach(s => keys.add(s.k));
     Object.values(D.measures || {}).forEach(m => Object.keys(m || {}).forEach(k => keys.add(k)));
     const byId = Object.fromEntries(habits.map(h => [h.id, h]));
@@ -197,6 +198,8 @@
       Object.keys(row).filter(id => !byId[id]).forEach(id => { fm[id] = row[id]; });
       const f = (D.focus || {})[k];
       if (f && f.text) { fm['chose du jour'] = f.text; fm['chose faite'] = !!f.done; }
+      const ps = (D.pas || {})[k];
+      if (ps) { if (ps.idee) fm['idée du jour'] = `[[${ps.idee}]]`; if (ps.graine) fm['pas du jour'] = `[[${ps.graine}]]`; }
       const o = prev[p] || {};
       if (o.avis) fm.avis = o.avis;
       let body = `# ${longDate(k)}\n`;
@@ -343,8 +346,8 @@
 
     /* --- Jours --- */
     const byName = {}; D.habits.forEach(h => { byName[h.name] = byName[h.name] || h; byName[`${h.name} (${h.id})`] = h; byName[h.id] = h; });
-    const SKIP = ['type', 'créé', 'avis', 'thème', 'chose du jour', 'chose faite', 'tags', 'aliases', 'cssclasses'];
-    D.logs = {}; D.measures = {}; D.focus = {}; D.journal = {}; D.sessions = [];
+    const SKIP = ['type', 'créé', 'avis', 'thème', 'chose du jour', 'chose faite', 'idée du jour', 'pas du jour', 'tags', 'aliases', 'cssclasses'];
+    D.logs = {}; D.measures = {}; D.focus = {}; D.journal = {}; D.sessions = []; D.pas = {};
     const doneByDay = {};
     const progs = {};
     inDir('Jours').forEach(n => {
@@ -362,6 +365,8 @@
           if (num > 0) (D.logs[k] = D.logs[k] || {})[h.id] = num;
         }
       }
+      const unl = v => String(v || '').replace(/^\[\[|\]\]$/g, '').split('|')[0];
+      if (f['idée du jour'] || f['pas du jour']) D.pas[k] = { idee: unl(f['idée du jour']), graine: unl(f['pas du jour']) };
       if (f['chose du jour']) D.focus[k] = { text: String(f['chose du jour']), done: f['chose faite'] === true };
       const secs = sections(n.body);
       const js = findSec(secs, 'journal');

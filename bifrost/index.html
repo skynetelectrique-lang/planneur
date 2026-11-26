@@ -1987,7 +1987,7 @@ async function syncPull() {
       else { v = remote[p]; conflicts.push(p.split('/').pop().replace(/\.md$/, '')); }
       if (v !== undefined) merged[p] = v;
     }
-    if (first && !Object.keys(remote).length) { SY.head = head; SY.remote = {}; SY.norm = {}; D._dirty = true; saveSyncState(); SY.pulling = false; await syncPush(); return; }
+    if (first && !Object.keys(remote).length) { SY.freshVault = true; SY.head = head; SY.remote = {}; SY.norm = {}; D._dirty = true; saveSyncState(); SY.pulling = false; await syncPush(); return; }
     adopt(merged, head, remote);
     const now = localFiles(), pending = Object.keys(now).some(p => now[p] !== SY.norm[p]);
     D._dirty = pending; saveLocal(); saveSyncState();
@@ -2072,7 +2072,7 @@ function vLogin() {
 }
 function shPaste() {
   return `<h2 style="font-size:22px">Importer l'ancien planneur</h2>
-    <p class="muted" style="margin:0;font-size:14px">Dans l'ancien planneur : Réglages → « Copier mes données ». Colle le texte ici : il remplacera les données de Bifröst et sera écrit dans La Serre.</p>
+    <p class="muted" style="margin:0;font-size:14px">Dans l'ancien planneur : Réglages → « Copier mes données ». Colle le texte ici. Les routines, tâches et réglages de l'ancien planneur remplacent ceux de Bifröst ; les jours déjà notés dans Bifröst sont gardés.</p>
     <textarea class="input" id="pastetxt" style="min-height:160px" data-autofocus></textarea>
     <button class="btn-main" data-a="paste-go">Importer</button>`;
 }
@@ -2090,7 +2090,8 @@ const SYNC_ACTIONS = {
       SY.head = null; SY.remote = {}; SY.norm = {}; SY.meta = {};
       render(); toast('Pont ouvert vers La Serre');
       await syncPull();
-      if (!Object.keys(SY.remote).length || !(SY.meta.dayKeys || []).length) openSheet({ type: 'paste' });
+      // L'import n'est proposé que si La Serre n'a encore aucune routine de Bifröst
+      if (SY.freshVault) openSheet({ type: 'paste' });
     } catch (e) {
       SY.user = null; L.busy = false;
       L.err = e.auth ? 'Clé refusée par GitHub.' : /Could not resolve|NOT_FOUND|voit pas/i.test(e.message) ? 'Cette clé n\'a pas accès au dépôt la-serre.' : !navigator.onLine ? 'Pas de connexion internet.' : e.message;
@@ -2104,6 +2105,13 @@ const SYNC_ACTIONS = {
     try {
       const d = JSON.parse(input('pastetxt') || ''); if (!d.habits || !d.themes) throw new Error();
       for (const k of Object.keys(d)) if (k.startsWith('_')) delete d[k];
+      // On garde ce qui a déjà été fait dans Bifröst : les jours se fusionnent au lieu d'être écrasés
+      const cur = D, mergeObj = (a, b) => { const o = { ...(a || {}) }; for (const [k, v] of Object.entries(b || {})) o[k] = { ...(o[k] || {}), ...v }; return o; };
+      d.logs = mergeObj(d.logs, cur.logs); d.measures = mergeObj(d.measures, cur.measures);
+      d.journal = { ...(d.journal || {}), ...(cur.journal || {}) }; d.focus = { ...(d.focus || {}), ...(cur.focus || {}) };
+      const seen = new Set((d.sessions || []).map(x => x.k + '|' + x.pname + '|' + x.dur));
+      d.sessions = [...(d.sessions || []), ...(cur.sessions || []).filter(x => !seen.has(x.k + '|' + x.pname + '|' + x.dur))].sort((a, b) => b.at - a.at);
+      if (cur.favs) d.favs = cur.favs;
       D = d; load.fill(); save(); closeSheet(); S.medit = initMedit(); render(); toast('Import en cours vers La Serre…');
     } catch (e) { toast('Texte illisible'); }
   },

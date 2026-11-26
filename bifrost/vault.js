@@ -147,6 +147,34 @@
     const used = new Set();
     const uniq = (dir, name) => { let p = `${BASE}/${dir}/${fname(name)}.md`, i = 2; while (used.has(p)) p = `${BASE}/${dir}/${fname(name)} (${i++}).md`; used.add(p); return p; };
 
+    /* Historique d'une routine, tenu par Bifröst (lecture seule) : les deux dernières semaines
+       jusqu'au dernier jour noté, la série en cours et le total du mois */
+    const logKeys = Object.keys(D.logs || {}).filter(isKey).sort();
+    const lastKey = logKeys[logKeys.length - 1];
+    const MS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    function history(h) {
+      if (!lastKey) return '';
+      const v = k => ((D.logs || {})[k] || {})[h.id] || 0;
+      const full = h.type === 'check' || h.type === 'measure' ? 1 : (h.target || 1);
+      const planned = d => h.freq !== 'days' || (h.days || []).includes(wd(d));
+      const end = fromKey(lastKey), mon = new Date(end); mon.setDate(end.getDate() - wd(end) - 7);
+      let rows = '';
+      for (let w = 0; w < 2; w++) {
+        const a = new Date(mon); a.setDate(mon.getDate() + w * 7);
+        const b = new Date(a); b.setDate(a.getDate() + 6);
+        let cells = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(a); d.setDate(a.getDate() + i); const k = dkey(d), x = v(k);
+          cells.push(d > end ? ' ' : x >= full ? '✅' : x > 0 ? '🟡' : planned(d) ? '⚪' : '·');
+        }
+        rows += `| ${a.getDate()}${a.getMonth() !== b.getMonth() ? ' ' + MS[a.getMonth()] : ''} – ${b.getDate()} ${MS[b.getMonth()]} | ${cells.join(' | ')} |\n`;
+      }
+      let streak = 0; const d = new Date(end);
+      for (let i = 0; i < 400; i++) { const k = dkey(d); if (v(k) >= full) streak++; else if (planned(d) && k !== lastKey) break; d.setDate(d.getDate() - 1); }
+      const month = logKeys.filter(k => k.slice(0, 7) === lastKey.slice(0, 7) && v(k) >= full).length;
+      return `\n## 📅 Les deux dernières semaines\n\n| Semaine | L | M | M | J | V | S | D |\n|---|---|---|---|---|---|---|---|\n${rows}\n**Série** : ${streak} jour${streak > 1 ? 's' : ''} · **Ce mois-ci** : ${month} fois\n\n*✅ fait · 🟡 commencé · ⚪ prévu, pas fait · · pas prévu. Tenu à jour par Bifröst, à partir des notes de \`Jours\`.*\n`;
+    }
+
     /* --- Routines --- */
     habits.forEach((h, i) => {
       const p = uniq('Routines', h.name);
@@ -162,7 +190,7 @@
       });
       const when = h.freq === 'days' ? ((h.days || []).length === 7 ? 'tous les jours' : (h.days || []).map(d => WDN[d].toLowerCase()).join(', ') || 'aucun jour') : `${h.times || 1} fois par ${FREQS[h.freq] || h.freq}`;
       const what = h.type === 'time' ? `${h.target} min` : h.type === 'count' ? `${h.target} fois` : h.type === 'measure' ? `une mesure${h.unit ? ` (${h.unit})` : ''}` : 'à cocher';
-      put(p, fm, `# ${h.name}\n\n> [!pousse] Routine\n> ${what}, ${when}${h.cue ? ` · ${h.cue}` : ''}${h.archived ? '\n> *En pause (archivée).*' : ''}\n`);
+      put(p, fm, `# ${h.name}\n\n> [!pousse] Routine\n> ${what}, ${when}${h.cue ? ` · ${h.cue}` : ''}${h.archived ? '\n> *En pause (archivée).*' : ''}\n${history(h)}`);
     });
 
     /* --- Jours --- */

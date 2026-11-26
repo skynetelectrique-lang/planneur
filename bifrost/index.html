@@ -2370,7 +2370,9 @@ function dAvis(N) {
     <span class="muted" style="font-size:12px">Dis « ramasse les avis » à Claude quand tu veux qu'il s'en occupe.</span>`);
 }
 function dBoite(N) {
-  const G = N.filter(n => n.p.startsWith('00 Graines/')), T = N.filter(n => n.type === 'lecture' && n.statut === 'à trier');
+  // la liste des fichiers est plus fraîche que le résumé : elle fait foi pour les graines
+  const G = SR.idx ? SR.idx.filter(p => p.startsWith('00 Graines/')).map(p => ({ p })) : N.filter(n => n.p.startsWith('00 Graines/'));
+  const T = N.filter(n => n.type === 'lecture' && n.statut === 'à trier' && (!SR.idx || SR.idx.includes(n.p)));
   return block('db', '🌱 Ta boîte', `<div class="stats"><div><b>${G.length}</b><span>graine${G.length > 1 ? 's' : ''}</span></div><div><b>${T.length}</b><span>lecture${T.length > 1 ? 's' : ''} à trier</span></div></div>
     ${G.length ? `<div class="dlist">${G.slice(0, 5).map(n => `<a href="${obsUrl(n.p)}"><span class="nm">${esc(noteName(n.p))}</span></a>`).join('')}</div>` : ''}`);
 }
@@ -2398,6 +2400,7 @@ function dLiens() {
 function vSerre() {
   if (!SR.ideaPath && !SR.ideaErr && SY.user) setTimeout(() => loadIdea(), 0);
   if (SY.user && (!KIO.notes || KIO.head !== SY.head) && !KIO.loading && KIO.failed !== SY.head) setTimeout(() => loadKiosque(), 0);
+  if (SY.user && (!SR.idx || SR.idxHead !== SY.head) && !SR.loading) setTimeout(() => serreIndex().then(() => S.view === 'serre' && !S.sheet && render()), 0);
   const N = KIO.notes || [];
   const blocks = [dJournee(), dSemer(), dQuestion(N), dIdee(N), dLecture(N), dLecon(N), dPepiniere(N), dAvis(N), dBoite(N), dLiens()].filter(Boolean);
   return `<main class="screen kiosk">

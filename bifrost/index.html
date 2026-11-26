@@ -112,7 +112,7 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 .li .del{color:var(--muted)}
 
 .sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.stile{background:var(--card);border:1px solid rgba(90,169,255,.10);border-radius:18px;min-height:64px;padding:12px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.stile{font:inherit;cursor:pointer;text-align:left;background:var(--card);border:1px solid rgba(90,169,255,.10);border-radius:18px;min-height:64px;padding:12px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
 .stile svg{color:var(--aqua);flex-shrink:0}
 .seed{padding:16px;display:flex;flex-direction:column;gap:10px}
 .seed textarea{min-height:84px;resize:vertical}
@@ -2443,12 +2443,12 @@ function dSemer() {
 }
 function dLiens() {
   const k = todayKey(), favs = D.favs || [];
-  const short = [['Accueil', '40 Kiosque/Accueil', 'leaf'], ['Ma journée', `${Vault.BASE}/Jours/${k}`, 'sun'], ['À faire', `${Vault.BASE}/À faire`, 'todo'], ["Mode d'emploi", "_Mode d'emploi", 'book']];
+  const short = [['Accueil', '40 Kiosque/Accueil', 'leaf'], ['Au hasard', null, 'shuffle'], ['À faire', `${Vault.BASE}/À faire`, 'todo'], ["Mode d'emploi", "_Mode d'emploi", 'book']];
   const q = SR.favQ.trim().toLowerCase();
   const found = q.length >= 2 && SR.idx ? SR.idx.filter(p => noteName(p).toLowerCase().includes(q) && !favs.includes(noteName(p))).slice(0, 6) : [];
   return `<section class="card dblock">
       <span class="eyebrow">📂 Ouvrir dans Obsidian</span>
-      <div class="sgrid">${short.map(([l, t, i]) => `<a class="stile" href="${obsUrl(t)}">${ic(i, 20, 1.8)}<span>${esc(l)}</span></a>`).join('')}</div>
+      <div class="sgrid">${short.map(([l, t, i]) => t ? `<a class="stile" href="${obsUrl(t)}">${ic(i, 20, 1.8)}<span>${esc(l)}</span></a>` : `<button class="stile" data-a="rand-note">${ic(i, 20, 1.8)}<span>${esc(l)}</span></button>`).join('')}</div>
       <div class="between" style="margin-top:6px"><span class="eyebrow">🔖 Favoris</span><button class="link" data-a="fav-edit">${S.favEdit ? 'Terminé' : 'Modifier'}</button></div>
       ${favs.length ? `<div class="dlist">${favs.map((f, i) => `<div class="frow"><button data-a="read-link" data-n="${esc(f)}"><span class="nm">${esc(noteName(f))}</span></button>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 16, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
       ${S.favEdit || !favs.length ? `<input class="input" id="favq" placeholder="Chercher une note de La Serre…" value="${esc(SR.favQ)}" autocomplete="off">
@@ -2692,6 +2692,8 @@ function dSemaine() {
 }
 
 const MORE_ACTIONS = {
+  // une note du jardin tirée au sort : idée, lecture, leçon, question ou carte
+  'rand-note': () => { const N = (KIO.notes || []).filter(n => ['permanente', 'lecture', 'leçon', 'question', 'carte'].includes(n.type)); if (!N.length) { toast('Le jardin se charge…'); return; } readerOpen(N[Math.floor(Math.random() * N.length)].p); },
   read: el => readerOpen(el.dataset.p),
   'read-link': el => readerOpen(resolveNote(el.dataset.n)),
   'read-back': () => { const h = [...(S.sheet.hist || [])]; const p = h.pop(); S.sheet = { type: 'reader', p, hist: h }; renderSheet(); },

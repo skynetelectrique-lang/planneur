@@ -119,7 +119,7 @@
   }
   const findSec = (secs, word) => { const k = Object.keys(secs).find(x => x.toLowerCase().includes(word)); return k === undefined ? null : secs[k]; };
   function table(text) {
-    const rows = lines(text).split('\n').filter(l => /^\s*\|/.test(l)).map(l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim().replace(/\\\|/g, '|')));
+    const rows = lines(text).split('\n').filter(l => /^\s*\|/.test(l)).map(l => l.trim().replace(/^\||(?<!\\)\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|')));
     return rows.filter(r => !r.every(c => /^:?-{2,}:?$/.test(c))).slice(1);
   }
   const cell = s => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
@@ -127,6 +127,11 @@
   const extra = (o, known) => { const r = {}; for (const k of Object.keys(o)) if (!known.includes(k)) r[k] = o[k]; return Object.keys(r).length ? JSON.stringify(r) : undefined; };
   const unextra = s => { if (!s) return {}; try { return typeof s === 'string' ? JSON.parse(s) : {}; } catch (e) { return {}; } };
   const today = () => dkey(new Date());
+  // Images rangées dans 30 Remise/Images (sport-<clé>.webp, livre-*.webp)
+  let IMG = new Set();
+  const imgFile = k => /^livre-/.test(k) ? `${k}.webp` : `sport-${k}.webp`;
+  const embed = (k, w) => k && IMG.has(k) ? `![[${imgFile(k)}\\|${w}]]` : '';
+  const unembed = c => { const m = String(c || '').match(/!\[\[(?:sport-)?([^\]|\\]+?)\.webp/); return m ? m[1] : String(c || '').trim(); };
 
   /* ========================================================
      D → notes
@@ -232,7 +237,7 @@
     (D.programs || []).forEach(pr => {
       const p = uniq('Sport', pr.name);
       const fm = keep(p, { type: 'programme', id: pr.id, couleur: pr.color, actuel: D.curProg === pr.id, données: extra(pr, ['id', 'name', 'color', 'exercises']) });
-      put(p, fm, `# ${pr.name}\n\n| Exercice | Séries | Clé |\n|---|---|---|\n${(pr.exercises || []).map(e => `| ${cell(e.name)} | ${cell(e.reps)} | ${cell(e.id)} |`).join('\n')}\n`);
+      put(p, fm, `# ${pr.name}\n\n| Exercice | Séries | Clé | Image |\n|---|---|---|---|\n${(pr.exercises || []).map(e => `| ${cell(e.name)} | ${cell(e.reps)} | ${cell(e.id)} | ${embed(e.id, 60)} |`).join('\n')}\n`);
     });
 
     /* --- Objectifs --- */
@@ -244,7 +249,7 @@
 
     /* --- Livres --- */
     put(`${BASE}/Livres.md`, keep(`${BASE}/Livres.md`, { type: 'livres' }),
-      `# Livres\n\n| Titre | Statut | Progression | Image |\n|---|---|---|---|\n${(D.books || []).map(b => `| ${cell(b.title)} | ${BOOK[b.status] || b.status} | ${b.progress || 0} % | ${cell(b.img || '')} |`).join('\n')}\n`);
+      `# Livres\n\n| Titre | Statut | Progression | Image |\n|---|---|---|---|\n${(D.books || []).map(b => `| ${cell(b.title)} | ${BOOK[b.status] || b.status} | ${b.progress || 0} % | ${embed(b.img, 50) || cell(b.img || '')} |`).join('\n')}\n`);
 
     /* --- Carnet (notes libres) --- */
     const notes = [...(D.notes || [])].sort((a, b) => (a.at || 0) - (b.at || 0));
@@ -444,7 +449,7 @@
     /* --- Livres --- */
     const lv = one('Livres');
     const BK_IN = inv(BOOK);
-    D.books = lv ? table(lv.body).filter(r => r[0]).map((r, i) => ({ id: `b${i + 1}`, title: r[0], status: BK_IN[(r[1] || '').toLowerCase()] || 'todo', progress: Math.max(0, Math.min(100, parseInt(r[2], 10) || 0)), img: r[3] || '' })) : [];
+    D.books = lv ? table(lv.body).filter(r => r[0]).map((r, i) => ({ id: `b${i + 1}`, title: r[0], status: BK_IN[(r[1] || '').toLowerCase()] || 'todo', progress: Math.max(0, Math.min(100, parseInt(r[2], 10) || 0)), img: unembed(r[3]) })) : [];
 
     /* --- Carnet --- */
     const cn = one('Carnet');
@@ -494,6 +499,6 @@
     return { D, prevFm, created, dayKeys: inDir('Jours').map(n => stem(n.p)).filter(isKey) };
   }
 
-  const api = { BASE, serialize, parse, splitNote, yaml };
+  const api = { BASE, serialize, parse, splitNote, yaml, setImages: keys => { IMG = new Set(keys); } };
   if (typeof module !== 'undefined') module.exports = api; else root.Vault = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -111,6 +111,23 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 .li .act{min-height:44px;padding:0 10px;border:0;background:none;color:var(--teal);font-weight:600;font-size:13px;white-space:nowrap}
 .li .del{color:var(--muted)}
 
+.sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stile{background:var(--card);border:1px solid rgba(90,169,255,.10);border-radius:18px;min-height:64px;padding:12px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.stile svg{color:var(--aqua);flex-shrink:0}
+.seed{padding:16px;display:flex;flex-direction:column;gap:10px}
+.seed textarea{min-height:84px;resize:vertical}
+.seedbtn{background:var(--aurore)!important;color:#0B1224!important}
+.idea{padding:18px;display:flex;flex-direction:column;gap:10px}
+.idea-t{font-family:var(--serif);font-size:19px;line-height:1.3;margin:0;color:#C9D8F2}
+.md{font-size:15px;line-height:1.6;color:var(--ink);display:flex;flex-direction:column;gap:8px}
+.md p{margin:0}.md ul{margin:0;padding-left:20px}.md h3{font-size:16px;margin:6px 0 0;color:var(--violet)}
+.md b{color:#F1E9FF}.md i{color:var(--muted)}.md code{background:var(--chip);padding:1px 5px;border-radius:6px;font-size:13px}
+.md .wl{color:var(--cyan)}
+.md .callout{border-left:3px solid var(--aqua);background:rgba(95,224,166,.07);border-radius:0 12px 12px 0;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.favlink{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;flex:1;min-height:48px;font-size:15px}
+.favlink svg{color:var(--violet);flex-shrink:0}
+.addfav{border:0;background:none;width:100%;text-align:left;color:var(--ink)}
+.addfav small{display:block;color:var(--muted);font-size:12px}
 /* nav */
 .nav{position:fixed;left:50%;transform:translateX(-50%);width:min(456px,calc(100% - 24px));bottom:calc(var(--safe-bottom) + 12px);height:72px;background:var(--card);border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.24);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;z-index:20}
 .nav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;letter-spacing:-.015em;white-space:nowrap;color:var(--muted);min-height:48px;justify-content:center}
@@ -559,6 +576,7 @@ function defaults() {
     measures: {},
     journal: {},
     tcc: tccDef(),
+    favs: ['Accueil', 'Planneur perso'],
   };
 }
 
@@ -666,7 +684,7 @@ function render() {
   else if (S.view === 'run') html = vRun();
   else if (S.view === 'asrs') html = vAsrs();
   else {
-    html = { today: vToday, week: vWeek, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
+    html = { today: vToday, week: vWeek, serre: vSerre, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
   }
   app().innerHTML = html;
   renderSheet();
@@ -684,8 +702,9 @@ function renderSheet() {
 }
 
 function vNav() {
-  const b = (v, icon, label) => `<button data-a="nav" data-v="${v}" class="${S.view === v ? 'on' : ''}" ${S.view === v ? 'aria-current="page"' : ''}>${ic(icon, 22, S.view === v ? 2 : 1.8)}${label}</button>`;
-  return `<nav class="nav" aria-label="Navigation principale">${b('today', 'sun', "Aujourd'hui")}${b('week', 'week', 'Semaine')}${b('todo', 'pen', 'Journal')}<div><button class="fab" data-a="fab" aria-label="Ajout rapide">${ic('plus', 26, 2.2)}</button></div>${b('routines', 'ring', 'Routines')}${b('sport', 'dumbbell', 'Sport')}${b('tcc', 'tcc', 'TCC')}</nav>`;
+  const cur = v => S.view === v || (v === 'today' && S.view === 'week');
+  const b = (v, icon, label) => `<button data-a="nav" data-v="${v}" class="${cur(v) ? 'on' : ''}" ${cur(v) ? 'aria-current="page"' : ''}>${ic(icon, 22, cur(v) ? 2 : 1.8)}${label}</button>`;
+  return `<nav class="nav" aria-label="Navigation principale">${b('today', 'sun', "Aujourd'hui")}${b('serre', 'plant', 'La Serre')}${b('todo', 'pen', 'Journal')}<div><button class="fab" data-a="fab" aria-label="Ajout rapide">${ic('plus', 26, 2.2)}</button></div>${b('routines', 'ring', 'Routines')}${b('sport', 'dumbbell', 'Sport')}${b('tcc', 'tcc', 'TCC')}</nav>`;
 }
 
 /* --- Aujourd'hui --- */
@@ -740,6 +759,7 @@ function vToday() {
       <div class="dayring ${full ? 'full' : ''}">${ring(88, 35, 9, dp.pct, th.color, '#22304B', `Journée à ${Math.round(dp.pct * 100)} %`)}
         <div class="lbl"><span class="big">${dp.done}/${dp.total}</span><span class="small">routines</span></div></div>
     </header>
+    <div class="seg" role="tablist"><button role="tab" aria-selected="true" class="on">Jour</button><button role="tab" aria-selected="false" data-a="nav" data-v="week">Semaine</button></div>
     ${oneCard}
     <section style="display:flex;flex-direction:column;gap:14px">
       <div class="between"><h2 class="h-sec">Routines du jour</h2><button class="link" data-a="nav" data-v="routines">Tout voir</button></div>
@@ -2089,6 +2109,148 @@ const SYNC_ACTIONS = {
   },
 };
 
+/* ============ Onglet La Serre ============ */
+const VAULT = 'La Serre';
+const obsUrl = target => `obsidian://open?vault=${encodeURIComponent(VAULT)}&file=${encodeURIComponent(String(target).replace(/\.md$/, ''))}`;
+const SR = { idx: null, idxHead: null, loading: false, idea: null, ideaPath: null, ideaErr: '', seedBusy: false, favQ: '' };
+try { const c = JSON.parse(localStorage.getItem('bifrost.idx') || 'null'); if (c) { SR.idx = c.paths; SR.idxHead = c.head; } } catch (e) { }
+async function ghRest(path, raw) {
+  const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/${path}`, { headers: { Authorization: `bearer ${SY.user.token}`, Accept: raw ? 'application/vnd.github.raw' : 'application/vnd.github+json' } });
+  if (r.status === 401) { const e = new Error('Clé refusée'); e.auth = true; throw e; }
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+  return raw ? r.text() : r.json();
+}
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+async function serreIndex(force) {
+  if (!SY.user || SR.loading) return SR.idx;
+  if (SR.idx && !force && SR.idxHead === SY.head) return SR.idx;
+  SR.loading = true;
+  try {
+    const t = await ghRest(`git/trees/${GH.branch}?recursive=1`);
+    SR.idx = t.tree.filter(x => x.type === 'blob' && x.path.endsWith('.md') && !x.path.startsWith('.') && !x.path.startsWith('90 Compost/')).map(x => x.path);
+    SR.idxHead = SY.head;
+    try { localStorage.setItem('bifrost.idx', JSON.stringify({ head: SR.idxHead, paths: SR.idx })); } catch (e) { }
+  } catch (e) { } finally { SR.loading = false; }
+  return SR.idx;
+}
+const herbier = () => (SR.idx || []).filter(p => p.startsWith('20 Herbier/'));
+function dayPick(arr) { const k = todayKey(); let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0; return arr[h % arr.length]; }
+async function loadIdea(path) {
+  SR.ideaErr = '';
+  if (!path) { await serreIndex(); const H = herbier(); if (!H.length) { SR.ideaErr = 'L\'Herbier est vide pour le moment.'; return; } path = dayPick(H); }
+  SR.ideaPath = path; SR.idea = null;
+  if (S.view === 'serre') render();
+  try { SR.idea = await ghRest(`contents/${encPath(path)}?ref=${GH.branch}`, true); }
+  catch (e) { SR.ideaErr = navigator.onLine ? 'Impossible de cueillir l\'idée.' : 'Hors ligne : l\'idée attendra.'; }
+  if (S.view === 'serre') render();
+}
+/* Un Markdown d'Obsidian rendu simplement : titres, gras, listes, encadrés, liens en texte */
+function mdLite(text) {
+  let t = String(text || '').replace(/\r/g, '').replace(/^---\n[\s\S]*?\n---\n?/, '');
+  t = t.replace(/^# .*\n?/m, '');
+  const cut = t.search(/^## (🔗|🌱 Origine|Liens possibles)/m); if (cut > 0) t = t.slice(0, cut);
+  const inline = s => esc(s).replace(/!\[\[[^\]]*\]\]/g, '').replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '<span class="wl">$2</span>').replace(/\[\[([^\]]+)\]\]/g, '<span class="wl">$1</span>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const out = []; let list = null, call = null;
+  const flush = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; } if (call) { out.push(`<div class="callout"><b>${call.title}</b>${call.body.map(l => `<p>${l}</p>`).join('')}</div>`); call = null; } };
+  for (const l of t.split('\n')) {
+    const c = l.match(/^> \[!\w+\][-+]? ?(.*)$/);
+    if (c) { flush(); call = { title: inline(c[1]), body: [] }; continue; }
+    if (call && /^>/.test(l)) { const x = l.replace(/^> ?/, ''); if (x.trim()) call.body.push(inline(x)); continue; }
+    const li = l.match(/^\s*[-*] (?:\[.\] )?(.*)$/);
+    if (li) { if (call) flush(); (list = list || []).push(`<li>${inline(li[1])}</li>`); continue; }
+    flush();
+    const h = l.match(/^#{2,6} (.*)$/);
+    if (h) out.push(`<h3>${inline(h[1])}</h3>`);
+    else if (l.trim()) out.push(`<p>${inline(l)}</p>`);
+  }
+  flush();
+  return out.join('');
+}
+const noteName = p => String(p).split('/').pop().replace(/\.md$/, '');
+function vSerre() {
+  const k = todayKey();
+  if (!SR.ideaPath && !SR.ideaErr && SY.user) setTimeout(() => loadIdea(), 0);
+  const favs = D.favs || [];
+  const short = [
+    ['Accueil', '40 Kiosque/Accueil', 'leaf'],
+    ['Ma journée', `${Vault.BASE}/Jours/${k}`, 'sun'],
+    ['À faire', `${Vault.BASE}/À faire`, 'todo'],
+    ['Tableau de bord', '40 Kiosque/Tableau de bord.canvas', 'week'],
+  ];
+  const q = SR.favQ.trim().toLowerCase();
+  const found = q.length >= 2 && SR.idx ? SR.idx.filter(p => noteName(p).toLowerCase().includes(q) && !favs.includes(noteName(p))).slice(0, 6) : [];
+  return `<main class="screen">
+    <header style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Ton jardin</span><h1 class="h-title">La Serre</h1></header>
+
+    <section class="card seed">
+      <span class="eyebrow">🌱 Semer une graine</span>
+      <textarea class="input" id="seedtxt" placeholder="Une idée, un lien, une envie…" rows="3">${esc(S.seedDraft || '')}</textarea>
+      <div class="between"><span class="muted" style="font-size:12px">Elle tombe dans 00 Graines.</span><button class="pill-btn seedbtn" data-a="seed" ${SR.seedBusy ? 'disabled' : ''}>${SR.seedBusy ? 'Semis…' : 'Semer'}</button></div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:12px">
+      <h2 class="h-sec">Ouvrir dans Obsidian</h2>
+      <div class="sgrid">${short.map(([l, t, i]) => `<a class="stile" href="${obsUrl(t)}">${ic(i, 22, 1.8)}<span>${esc(l)}</span></a>`).join('')}</div>
+    </section>
+
+    <section class="card idea">
+      <div class="between"><span class="eyebrow">✨ L'idée à relire</span><button class="link" data-a="idea-next" aria-label="Une autre idée">${ic('shuffle', 18, 1.8)}</button></div>
+      ${SR.ideaErr ? `<p class="muted" style="margin:0">${esc(SR.ideaErr)}</p>` : !SR.idea ? `<p class="muted" style="margin:0">Cueillette en cours…</p>` : `
+        <h3 class="idea-t">${esc(noteName(SR.ideaPath))}</h3>
+        <div class="md">${mdLite(SR.idea)}</div>
+        <a class="btn-soft" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${obsUrl(SR.ideaPath)}">Ouvrir dans Obsidian</a>`}
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:12px">
+      <div class="between"><h2 class="h-sec">Favoris</h2><button class="link" data-a="fav-edit">${S.favEdit ? 'Terminé' : 'Modifier'}</button></div>
+      ${favs.length ? `<div class="list">${favs.map((f, i) => `<div class="li"><a class="favlink" href="${obsUrl(f)}">${ic('bookmark', 18, 1.8)}<span>${esc(noteName(f))}</span></a>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 18, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
+      ${S.favEdit || !favs.length ? `<input class="input" id="favq" placeholder="Chercher une note de La Serre…" value="${esc(SR.favQ)}" autocomplete="off">
+        ${SR.loading && !SR.idx ? '<span class="muted" style="font-size:13px">Lecture du jardin…</span>' : ''}
+        ${found.length ? `<div class="list">${found.map(p => `<button class="li addfav" data-a="fav-add" data-p="${esc(p)}"><span>${esc(noteName(p))}<small>${esc(p.split('/')[0])}</small></span>${ic('plus', 18, 2)}</button>`).join('')}</div>` : ''}` : ''}
+    </section>
+  </main>`;
+}
+async function seedGraine(text) {
+  const now = new Date(), k = dkey(now);
+  let base = fname(text.split('\n')[0].replace(/https?:\/\/\S+/g, '').split(/\s+/).slice(0, 7).join(' ')) || `Graine du ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  const url = (text.match(/https?:\/\/\S+/) || [])[0];
+  const body = `---\ntype: graine\ncréé: ${k}\navis:\n${url ? `lien: "${url}"\n` : ''}---\n\n${text.trim()}\n`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await syncPull();
+    const idx = await serreIndex(true) || [];
+    let p = `00 Graines/${base}.md`, i = 2; while (idx.includes(p)) p = `00 Graines/${base} ${i++}.md`;
+    try {
+      const oid = await commitFiles({ [p]: body }, [], `Graine : ${base}`);
+      // la graine ne touche pas à 05 Bifröst : la référence de synchro reste valable
+      SY.head = oid; saveSyncState();
+      if (SR.idx) SR.idx.push(p);
+      return p;
+    } catch (e) { if (!(e && e.gh)) throw e; }
+  }
+  throw new Error('La Serre est occupée, réessaie.');
+}
+function fname(s) { return String(s || '').replace(/[\\/:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().replace(/\.+$/, '').slice(0, 80); }
+const SERRE_ACTIONS = {
+  seed: async () => {
+    const t = (input('seedtxt') || '').trim(); S.seedDraft = t;
+    if (!t) { toast('Écris ta graine d\'abord'); return; }
+    SR.seedBusy = true; render();
+    try { await seedGraine(t); S.seedDraft = ''; toast('Graine semée dans La Serre 🌱'); }
+    catch (e) { toast(navigator.onLine ? (e.message || 'Semis impossible') : 'Hors ligne : ta graine reste ici'); }
+    SR.seedBusy = false; render();
+  },
+  'idea-next': async () => { await serreIndex(); const H = herbier().filter(p => p !== SR.ideaPath); if (H.length) loadIdea(H[Math.floor(Math.random() * H.length)]); },
+  'fav-edit': () => { S.favEdit = !S.favEdit; SR.favQ = ''; if (S.favEdit) serreIndex().then(() => render()); render(); },
+  'fav-del': el => { D.favs.splice(Number(el.dataset.i), 1); save(); render(); },
+  'fav-add': el => { const n = noteName(el.dataset.p); D.favs = D.favs || []; if (!D.favs.includes(n)) D.favs.push(n); SR.favQ = ''; save(); render(); toast('Ajouté aux favoris'); },
+};
+document.addEventListener('input', ev => {
+  if (ev.target.id === 'favq') { SR.favQ = ev.target.value; if (!SR.idx) serreIndex().then(() => S.view === 'serre' && rerenderKeepFocus('favq')); else rerenderKeepFocus('favq'); }
+  if (ev.target.id === 'seedtxt') S.seedDraft = ev.target.value;
+});
+function rerenderKeepFocus(id) { const el = document.getElementById(id), pos = el ? el.selectionStart : null; render(); const n = document.getElementById(id); if (n) { n.focus(); if (pos !== null) n.setSelectionRange(pos, pos); } }
+
 /* --- Journal : objectifs --- */
 const HORIZONS = [['mois', 'Ce mois-ci'], ['trim', 'Ce trimestre'], ['annee', 'Cette année'], ['libre', 'Sans échéance']];
 function jTabs() {
@@ -2503,7 +2665,7 @@ const A = {
   copy: () => { try { navigator.clipboard.writeText(JSON.stringify(D)).then(() => toast('Données copiées'), () => toast('Copie refusée')); } catch (e) { toast('Copie impossible ici'); } },
 };
 
-Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
+Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, SERRE_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-a]'); if (!el) return;

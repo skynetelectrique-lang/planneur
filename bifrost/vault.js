@@ -27,7 +27,7 @@
   // Données gardées seulement sur l'appareil (jamais dans le coffre)
   const LOCAL_ONLY = ['timer'];
   // Champs rangés dans leurs propres notes
-  const HANDLED = ['habits', 'logs', 'measures', 'focus', 'journal', 'sessions', 'themes', 'backlog', 'doneTodos', 'programs', 'curProg', 'goals', 'books', 'notes', 'tcc'];
+  const HANDLED = ['habits', 'logs', 'measures', 'focus', 'journal', 'sessions', 'themes', 'backlog', 'doneTodos', 'programs', 'curProg', 'goals', 'books', 'notes', 'tcc', 'favs'];
 
   const inv = o => Object.fromEntries(Object.entries(o).map(([a, b]) => [b, a]));
   const pad = n => String(n).padStart(2, '0');
@@ -248,6 +248,10 @@
     put(`${BASE}/Carnet.md`, keep(`${BASE}/Carnet.md`, { type: 'carnet' }),
       `# Carnet\n\n${notes.map(n => `### ${n.at ? `${dkey(new Date(n.at))} ${hhmm(n.at)}` : 'Sans date'}${n.pin ? ' 📌' : ''}\n\n${safeText(n.text)}\n`).join('\n')}`);
 
+    /* --- Favoris (liens vers La Serre) --- */
+    if (D.favs) put(`${BASE}/Favoris.md`, keep(`${BASE}/Favoris.md`, { type: 'favoris' }),
+      `# Favoris\n\n> [!conseil] Sous la main dans Bifröst\n> Une note par ligne, en lien Obsidian. Elles s'affichent dans l'onglet La Serre de Bifröst.\n\n${D.favs.map(f => `- [[${f}]]`).join('\n')}\n`);
+
     /* --- TCC --- */
     if (D.tcc) {
       const t = D.tcc;
@@ -435,6 +439,10 @@
         if (t) D.notes.push({ id: 'n' + at.toString(36), text: t, at, upd: at, pin: h.includes('📌') });
       });
     }
+
+    /* --- Favoris --- */
+    const fv = one('Favoris');
+    if (fv) D.favs = [...lines(fv.body).matchAll(/^\s*[-*] .*?\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/gm)].map(m => m[1].trim());
 
     /* --- TCC --- */
     const tcc = one('TCC');

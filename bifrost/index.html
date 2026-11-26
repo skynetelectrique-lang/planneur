@@ -2414,7 +2414,7 @@ function dPepiniere(N) {
       <div class="bar"><i style="width:${Math.round(seen / L.length * 100)}%;background:var(--aurore)"></i></div>
       <span class="muted" style="font-size:12px">${next ? `Prochaine : <button class="wl" data-a="read" data-p="${esc(next.p)}">${esc(noteName(next.p))}</button>` : 'Tout est vu'}${rev ? ` · ${rev} à revoir` : ''}${last ? '' : ''}</span></div>`;
   }).join('');
-  return rows ? block('dp', '🌿 La Pépinière', rows) : '';
+  return rows ? block('dp', '🪴 La Pépinière', rows) : '';
 }
 const AVIS_TODO = ['🌱', '🛠️', '🔍', '🤔', '🔁'];
 function dAvis(N) {

@@ -162,6 +162,8 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 #ptr.spin{color:var(--aqua);animation:ptrspin .8s linear infinite;transform:translate(-50%,24px)!important}
 @keyframes ptrspin{to{rotate:360deg}}
 .icon-btn.spin svg{animation:ptrspin .8s linear infinite}
+#sidesync{display:none}
+@media (min-width:620px){ #sidesync{display:flex;position:fixed;top:calc(var(--safe-top) + 30px);left:calc(50% + 256px);z-index:20} #sidesync[hidden]{display:none} }
 /* nav */
 .nav{position:fixed;left:50%;transform:translateX(-50%);width:min(456px,calc(100% - 24px));bottom:calc(var(--safe-bottom) + 12px);height:72px;background:var(--card);border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.24);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;z-index:20}
 .nav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;letter-spacing:-.015em;white-space:nowrap;color:var(--muted);min-height:48px;justify-content:center}
@@ -723,6 +725,11 @@ function render() {
     html = { today: vToday, week: vWeek, serre: vSerre, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
   }
   document.body.classList.toggle('wideview', S.view === 'serre');
+  // bouton ⟳ dans la marge, pour l'ordinateur et l'iPad (l'onglet La Serre a le sien)
+  let rb = document.getElementById('sidesync');
+  if (!rb) { rb = document.createElement('button'); rb.id = 'sidesync'; rb.className = 'icon-btn'; rb.setAttribute('aria-label', 'Rafraîchir'); rb.dataset.a = 'side-refresh'; rb.innerHTML = ic('refresh', 20, 1.9); document.body.appendChild(rb); }
+  rb.hidden = S.view === 'serre' || PTR_OFF.includes(S.view);
+  rb.classList.toggle('spin', !!PTR.busy);
   app().innerHTML = html;
   renderSheet();
   if (prevView === S.view) window.scrollTo(0, scroll); else window.scrollTo(0, 0);
@@ -2440,6 +2447,7 @@ document.addEventListener('touchend', async () => {
   try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; ptrShow(0); }
 });
 const DASH_ACTIONS = {
+  'side-refresh': async () => { if (PTR.busy) return; PTR.busy = true; render(); try { await anyRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; render(); } },
   'dash-refresh': async () => { if (PTR.busy) return; PTR.busy = true; render(); try { await serreRefresh(); } catch (e) { toast('Rafraîchissement impossible'); } finally { PTR.busy = false; render(); } },
   'dash-shuf': el => { const k = el.dataset.k; SHUF[k] = (SHUF[k] === undefined ? Math.floor(Math.random() * 997) : SHUF[k]) + 1; render(); },
   'avis-f': el => { S.avisF = S.avisF === el.dataset.e ? null : el.dataset.e; render(); },

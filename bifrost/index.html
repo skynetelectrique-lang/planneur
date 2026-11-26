@@ -128,6 +128,35 @@ h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600}
 .favlink svg{color:var(--violet);flex-shrink:0}
 .addfav{border:0;background:none;width:100%;text-align:left;color:var(--ink)}
 .addfav small{display:block;color:var(--muted);font-size:12px}
+.dgrid{columns:1;column-gap:16px}
+.dblock{break-inside:avoid;margin:0 0 16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.djour{flex-direction:row;align-items:center;gap:14px;cursor:pointer}
+.cov{border-radius:14px;background:var(--chip) center/cover no-repeat;flex-shrink:0}
+.cov.wide{width:100%;aspect-ratio:2.6}
+.cov.side{width:64px;height:84px}
+.lrow{display:flex;gap:12px;align-items:center}
+.qtext{margin:0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.35;color:#C9D8F2}
+.ex{margin:0;font-size:14px;line-height:1.55;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:0;background:var(--chip);color:var(--ink);border-radius:999px;padding:4px 10px;font-size:12px;min-height:28px}
+.tag.on{background:var(--aqua);color:#0B1224;font-weight:700}
+.mini{white-space:nowrap;display:inline-flex;align-items:center;gap:4px;color:var(--teal);font-weight:600;font-size:13px;text-decoration:none;min-height:36px}
+.md.clip{max-height:170px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.prow{display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.prow a{color:var(--cyan);text-decoration:none}.ptitle{font-weight:600;font-size:14px;color:var(--ink)!important}
+.dlist{display:flex;flex-direction:column}
+.dlist a,.frow{display:flex;align-items:center;gap:10px;min-height:42px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:14px}
+.frow a{border:0;flex:1}.dlist>:last-child{border-bottom:0}
+.dlist .av{min-width:22px}.dlist .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stats div{background:var(--chip);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column}
+.stats b{font-family:var(--serif);font-size:22px}.stats span{font-size:12px;color:var(--muted)}
+@media (min-width:760px){
+  body.wideview #app{max-width:1180px}
+  body.wideview .screen{padding-left:28px;padding-right:28px}
+  .dgrid{columns:2 340px}
+}
+@media (min-width:1100px){ .dgrid{columns:3 320px} }
 /* nav */
 .nav{position:fixed;left:50%;transform:translateX(-50%);width:min(456px,calc(100% - 24px));bottom:calc(var(--safe-bottom) + 12px);height:72px;background:var(--card);border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.24);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;z-index:20}
 .nav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;letter-spacing:-.015em;white-space:nowrap;color:var(--muted);min-height:48px;justify-content:center}
@@ -687,6 +716,7 @@ function render() {
   else {
     html = { today: vToday, week: vWeek, serre: vSerre, routines: vRoutines, sport: vSport, medit: vMedit, tcc: vTcc, todo: vJournalTab }[S.view]() + vNav();
   }
+  document.body.classList.toggle('wideview', S.view === 'serre');
   app().innerHTML = html;
   renderSheet();
   if (prevView === S.view) window.scrollTo(0, scroll); else window.scrollTo(0, 0);
@@ -2180,49 +2210,6 @@ function mdLite(text) {
   return out.join('');
 }
 const noteName = p => String(p).split('/').pop().replace(/\.md$/, '');
-function vSerre() {
-  const k = todayKey();
-  if (!SR.ideaPath && !SR.ideaErr && SY.user) setTimeout(() => loadIdea(), 0);
-  const favs = D.favs || [];
-  const short = [
-    ['Accueil', '40 Kiosque/Accueil', 'leaf'],
-    ['Ma journée', `${Vault.BASE}/Jours/${k}`, 'sun'],
-    ['À faire', `${Vault.BASE}/À faire`, 'todo'],
-    ['Tableau de bord', '40 Kiosque/Tableau de bord.canvas', 'week'],
-  ];
-  const q = SR.favQ.trim().toLowerCase();
-  const found = q.length >= 2 && SR.idx ? SR.idx.filter(p => noteName(p).toLowerCase().includes(q) && !favs.includes(noteName(p))).slice(0, 6) : [];
-  return `<main class="screen">
-    <header style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Ton jardin</span><h1 class="h-title">La Serre</h1></header>
-
-    <section class="card seed">
-      <span class="eyebrow">🌱 Semer une graine</span>
-      <textarea class="input" id="seedtxt" placeholder="Une idée, un lien, une envie…" rows="3">${esc(S.seedDraft || '')}</textarea>
-      <div class="between"><span class="muted" style="font-size:12px">Elle tombe dans 00 Graines.</span><button class="pill-btn seedbtn" data-a="seed" ${SR.seedBusy ? 'disabled' : ''}>${SR.seedBusy ? 'Semis…' : 'Semer'}</button></div>
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:12px">
-      <h2 class="h-sec">Ouvrir dans Obsidian</h2>
-      <div class="sgrid">${short.map(([l, t, i]) => `<a class="stile" href="${obsUrl(t)}">${ic(i, 22, 1.8)}<span>${esc(l)}</span></a>`).join('')}</div>
-    </section>
-
-    <section class="card idea">
-      <div class="between"><span class="eyebrow">✨ L'idée à relire</span><button class="link" data-a="idea-next" aria-label="Une autre idée">${ic('shuffle', 18, 1.8)}</button></div>
-      ${SR.ideaErr ? `<p class="muted" style="margin:0">${esc(SR.ideaErr)}</p>` : !SR.idea ? `<p class="muted" style="margin:0">Cueillette en cours…</p>` : `
-        <h3 class="idea-t">${esc(noteName(SR.ideaPath))}</h3>
-        <div class="md">${mdLite(SR.idea)}</div>
-        <a class="btn-soft" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${obsUrl(SR.ideaPath)}">Ouvrir dans Obsidian</a>`}
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:12px">
-      <div class="between"><h2 class="h-sec">Favoris</h2><button class="link" data-a="fav-edit">${S.favEdit ? 'Terminé' : 'Modifier'}</button></div>
-      ${favs.length ? `<div class="list">${favs.map((f, i) => `<div class="li"><a class="favlink" href="${obsUrl(f)}">${ic('bookmark', 18, 1.8)}<span>${esc(noteName(f))}</span></a>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 18, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
-      ${S.favEdit || !favs.length ? `<input class="input" id="favq" placeholder="Chercher une note de La Serre…" value="${esc(SR.favQ)}" autocomplete="off">
-        ${SR.loading && !SR.idx ? '<span class="muted" style="font-size:13px">Lecture du jardin…</span>' : ''}
-        ${found.length ? `<div class="list">${found.map(p => `<button class="li addfav" data-a="fav-add" data-p="${esc(p)}"><span>${esc(noteName(p))}<small>${esc(p.split('/')[0])}</small></span>${ic('plus', 18, 2)}</button>`).join('')}</div>` : ''}` : ''}
-    </section>
-  </main>`;
-}
 async function seedGraine(text) {
   const now = new Date(), k = dkey(now);
   let base = fname(text.split('\n')[0].replace(/https?:\/\/\S+/g, '').split(/\s+/).slice(0, 7).join(' ')) || `Graine du ${now.getDate()} ${MONTHS[now.getMonth()]}`;
@@ -2252,7 +2239,7 @@ const SERRE_ACTIONS = {
     catch (e) { toast(navigator.onLine ? (e.message || 'Semis impossible') : 'Hors ligne : ta graine reste ici'); }
     SR.seedBusy = false; render();
   },
-  'idea-next': async () => { await serreIndex(); const H = herbier().filter(p => p !== SR.ideaPath); if (H.length) loadIdea(H[Math.floor(Math.random() * H.length)]); },
+  'idea-next': async () => { S.ideaOpen = false; await serreIndex(); const H = herbier().filter(p => p !== SR.ideaPath); if (H.length) loadIdea(H[Math.floor(Math.random() * H.length)]); },
   'fav-edit': () => { S.favEdit = !S.favEdit; SR.favQ = ''; if (S.favEdit) serreIndex().then(() => render()); render(); },
   'fav-del': el => { D.favs.splice(Number(el.dataset.i), 1); save(); render(); },
   'fav-add': el => { const n = noteName(el.dataset.p); D.favs = D.favs || []; if (!D.favs.includes(n)) D.favs.push(n); SR.favQ = ''; save(); render(); toast('Ajouté aux favoris'); },
@@ -2262,6 +2249,161 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'seedtxt') S.seedDraft = ev.target.value;
 });
 function rerenderKeepFocus(id) { const el = document.getElementById(id), pos = el ? el.selectionStart : null; render(); const n = document.getElementById(id); if (n) { n.focus(); if (pos !== null) n.setSelectionRange(pos, pos); } }
+
+/* ============ Tableau de bord (onglet La Serre) ============ */
+const KIO = { notes: null, head: null, loading: false, img: {}, imgWait: {} };
+try { const c = JSON.parse(localStorage.getItem('bifrost.kio') || 'null'); if (c) { KIO.notes = c.notes; KIO.head = c.head; } } catch (e) { }
+async function loadKiosque(force) {
+  if (!SY.user || KIO.loading) return;
+  if (KIO.notes && !force && KIO.head === SY.head) return;
+  if (!force && KIO.failed === SY.head) return;   // déjà raté pour cette version : on n'insiste pas
+  KIO.loading = true; let ok = false;
+  try {
+    const j = JSON.parse(await ghRest(`contents/.bifrost/index.json?ref=${GH.branch}`, true));
+    KIO.notes = j.notes || []; KIO.head = SY.head; ok = true;
+    try { localStorage.setItem('bifrost.kio', JSON.stringify({ head: KIO.head, notes: KIO.notes })); } catch (e) { }
+  } catch (e) { KIO.failed = SY.head; } finally { KIO.loading = false; if (ok && S.view === 'serre' && !S.sheet) render(); }
+}
+/* Couvertures : lues dans 30 Remise/Images, gardées sur l'appareil */
+function cover(file) {
+  if (!file) return '';
+  if (KIO.img[file]) return KIO.img[file];
+  if (!KIO.imgWait[file] && SY.user) {
+    KIO.imgWait[file] = true;
+    (async () => {
+      const req = new Request(`https://bifrost.local/img/${encodeURIComponent(file)}`);
+      let blob = null;
+      try { const c = await caches.open('bifrost-img'); const hit = await c.match(req); if (hit) blob = await hit.blob(); } catch (e) { }
+      if (!blob) {
+        try {
+          const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${encPath('30 Remise/Images/' + file)}?ref=${GH.branch}`, { headers: { Authorization: `bearer ${SY.user.token}`, Accept: 'application/vnd.github.raw' } });
+          if (r.ok) { blob = await r.blob(); try { const c = await caches.open('bifrost-img'); await c.put(req, new Response(blob)); } catch (e) { } }
+        } catch (e) { }
+      }
+      if (blob) { KIO.img[file] = URL.createObjectURL(blob); if (S.view === 'serre' && !S.sheet) render(); }
+    })();
+  }
+  return '';
+}
+const linkName = v => String(Array.isArray(v) ? v[0] : v || '').replace(/^\[\[|\]\]$/g, '').split('|')[0];
+const avisOf = n => (Array.isArray(n.avis) ? n.avis : n.avis ? [n.avis] : []).map(String);
+function pickOf(arr, salt) { if (!arr.length) return null; const k = todayKey() + salt; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0; return arr[h % arr.length]; }
+const SHUF = {};
+function pick(arr, key) { const i = SHUF[key]; return i !== undefined && arr.length ? arr[i % arr.length] : pickOf(arr, key); }
+function coverImg(n, cls = 'cov') { const u = cover(n && n.couverture); return n && n.couverture ? `<div class="${cls}" ${u ? `style="background-image:url('${u}')"` : ''}></div>` : ''; }
+function openBtn(p, label = 'Ouvrir') { return `<a class="mini" href="${obsUrl(p)}">${label} ${ic('next', 14, 2)}</a>`; }
+function block(cls, eyebrow, inner, extra = '') { return `<section class="card dblock ${cls}"><div class="between"><span class="eyebrow">${eyebrow}</span>${extra}</div>${inner}</section>`; }
+
+function dJournee() {
+  const now = logicalNow(), k = dkey(now), th = D.themes[wd(now)], dp = dayProgress(k), f = D.focus[k];
+  return `<section class="card dblock djour" data-a="nav" data-v="today" role="button">
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><span class="eyebrow">${WDN[wd(now)]} ${now.getDate()} ${MONTHS[now.getMonth()]}</span>
+      <h2 class="h-sec" style="font-family:var(--rune);font-weight:400">${esc(th.name)}</h2>
+      <span class="muted" style="font-size:14px">${f ? `${f.done ? '✓ ' : '→ '}${esc(f.text)}` : 'Pas encore de chose du jour'}</span></div>
+    <div class="dayring" style="width:72px;height:72px">${ring(72, 29, 8, dp.pct, th.color, '#22304B')}<div class="lbl"><span class="big" style="font-size:18px">${dp.done}/${dp.total}</span></div></div>
+  </section>`;
+}
+function dQuestion(N) {
+  const Q = N.filter(n => n.type === 'question' && n.statut === 'ouverte');
+  const q = pick(Q, 'q'); if (!q) return '';
+  return block('dq', '❓ La question du jour', `${coverImg(q, 'cov wide')}<p class="qtext">${esc(q.question || noteName(q.p))}</p>
+    <div class="between"><span class="muted" style="font-size:13px">${esc(linkName(q.carte))}</span>${openBtn(q.p, 'Y réfléchir')}</div>`, shuffleBtn('q', Q.length));
+}
+function shuffleBtn(key, n) { return n > 1 ? `<button class="link" data-a="dash-shuf" data-k="${key}" aria-label="Une autre">${ic('shuffle', 18, 1.8)}</button>` : ''; }
+function dIdee(N) {
+  const n = N.find(x => x.p === SR.ideaPath) || {};
+  return `<section class="card dblock idea">
+      <div class="between"><span class="eyebrow">✨ L'idée à relire</span><button class="link" data-a="idea-next" aria-label="Une autre idée">${ic('shuffle', 18, 1.8)}</button></div>
+      ${coverImg(n, 'cov wide')}
+      ${SR.ideaErr ? `<p class="muted" style="margin:0">${esc(SR.ideaErr)}</p>` : !SR.idea ? `<p class="muted" style="margin:0">Cueillette en cours…</p>` : `
+        <h3 class="idea-t">${esc(noteName(SR.ideaPath))}</h3>
+        <div class="md ${S.ideaOpen ? '' : 'clip'}">${mdLite(SR.idea)}</div>
+        <div class="between"><button class="link" data-a="idea-more">${S.ideaOpen ? 'Replier' : 'Lire la suite'}</button>${openBtn(SR.ideaPath)}</div>`}
+    </section>`;
+}
+function dLecture(N) {
+  const L = N.filter(n => n.type === 'lecture');
+  const l = pick(L, 'l'); if (!l) return '';
+  const tags = [l.thème, l.format].flat().filter(Boolean).slice(0, 3).map(t => `<span class="tag">${esc(String(t))}</span>`).join('');
+  return block('dl', '📖 Une lecture à redécouvrir', `<div class="lrow">${coverImg(l, 'cov side')}<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+      <h3 class="idea-t" style="font-size:16px">${esc(noteName(l.p))}</h3>${tags ? `<div class="tags">${tags}</div>` : ''}</div></div>
+    ${l.ex ? `<p class="ex">${esc(l.ex)}</p>` : ''}<div style="display:flex;justify-content:flex-end">${openBtn(l.p)}</div>`, shuffleBtn('l', L.length));
+}
+function dLecon(N) {
+  const R = N.filter(n => n.type === 'leçon' && n.maîtrise === 'à revoir');
+  const l = pick(R, 'r'); if (!l) return '';
+  return block('dr', `🔁 La leçon à revoir · ${R.length}`, `<h3 class="idea-t" style="font-size:16px">${esc(noteName(l.p))}</h3>
+    <span class="muted" style="font-size:13px">${esc(linkName(l.formation))}${l.leçon ? ` · ${esc(String(l.leçon).split(/[: ]/)[0])}` : ''}</span>
+    ${l.ex ? `<p class="ex">${esc(l.ex)}</p>` : ''}
+    <div class="between">${l.lien ? `<a class="mini" href="${esc(l.lien)}" target="_blank" rel="noopener">${ic('play', 14, 2)} La vidéo</a>` : '<span></span>'}${openBtn(l.p, 'La note')}</div>`, shuffleBtn('r', R.length));
+}
+function dPepiniere(N) {
+  const P = N.filter(n => n.type === 'parcelle');
+  if (!P.length) return '';
+  const rows = P.map(p => {
+    const name = noteName(p.p), L = N.filter(n => n.type === 'leçon' && linkName(n.formation) === name);
+    if (!L.length) return '';
+    const seen = L.filter(n => n.vue).length, rev = L.filter(n => n.maîtrise === 'à revoir').length;
+    const last = L.filter(n => n.vue).sort((a, b) => String(b.vue).localeCompare(String(a.vue)) || (b.numéro || 0) - (a.numéro || 0))[0];
+    const next = L.filter(n => !n.vue).sort((a, b) => (a.numéro || 999) - (b.numéro || 999))[0];
+    return `<div class="prow"><div class="between"><a class="ptitle" href="${obsUrl(p.p)}">${esc(name)}</a><span class="muted" style="font-size:12px">${seen}/${L.length}</span></div>
+      <div class="bar"><i style="width:${Math.round(seen / L.length * 100)}%;background:var(--aurore)"></i></div>
+      <span class="muted" style="font-size:12px">${next ? `Prochaine : <a href="${obsUrl(next.p)}">${esc(noteName(next.p))}</a>` : 'Tout est vu'}${rev ? ` · ${rev} à revoir` : ''}${last ? '' : ''}</span></div>`;
+  }).join('');
+  return rows ? block('dp', '🌿 La Pépinière', rows) : '';
+}
+const AVIS_TODO = ['🌱', '🛠️', '🔍', '🤔', '🔁'];
+function dAvis(N) {
+  const withAvis = N.filter(n => n.type !== 'kiosque' && !n.p.startsWith('_') && avisOf(n).some(a => AVIS_TODO.some(e => a.startsWith(e))));
+  if (!withAvis.length) return '';
+  const counts = AVIS_TODO.map(e => [e, withAvis.filter(n => avisOf(n).some(a => a.startsWith(e))).length]).filter(x => x[1]);
+  const f = S.avisF && counts.some(c => c[0] === S.avisF) ? S.avisF : null;
+  const list = withAvis.filter(n => !f || avisOf(n).some(a => a.startsWith(f))).slice(0, 8);
+  return block('da', '🧺 Tes avis en attente', `<div class="tags">${counts.map(([e, c]) => `<button class="tag ${f === e ? 'on' : ''}" data-a="avis-f" data-e="${e}">${e} ${c}</button>`).join('')}</div>
+    <div class="dlist">${list.map(n => `<a href="${obsUrl(n.p)}"><span class="av">${esc(avisOf(n).map(a => a.split(' ')[0]).join(''))}</span><span class="nm">${esc(noteName(n.p))}</span></a>`).join('')}</div>
+    <span class="muted" style="font-size:12px">Dis « ramasse les avis » à Claude quand tu veux qu'il s'en occupe.</span>`);
+}
+function dBoite(N) {
+  const G = N.filter(n => n.p.startsWith('00 Graines/')), T = N.filter(n => n.type === 'lecture' && n.statut === 'à trier');
+  return block('db', '🌱 Ta boîte', `<div class="stats"><div><b>${G.length}</b><span>graine${G.length > 1 ? 's' : ''}</span></div><div><b>${T.length}</b><span>lecture${T.length > 1 ? 's' : ''} à trier</span></div></div>
+    ${G.length ? `<div class="dlist">${G.slice(0, 5).map(n => `<a href="${obsUrl(n.p)}"><span class="nm">${esc(noteName(n.p))}</span></a>`).join('')}</div>` : ''}`);
+}
+function dSemer() {
+  return `<section class="card seed dblock">
+      <span class="eyebrow">🌱 Semer une graine</span>
+      <textarea class="input" id="seedtxt" placeholder="Une idée, un lien, une envie…" rows="3">${esc(S.seedDraft || '')}</textarea>
+      <div class="between"><span class="muted" style="font-size:12px">Elle tombe dans 00 Graines.</span><button class="pill-btn seedbtn" data-a="seed" ${SR.seedBusy ? 'disabled' : ''}>${SR.seedBusy ? 'Semis…' : 'Semer'}</button></div>
+    </section>`;
+}
+function dLiens() {
+  const k = todayKey(), favs = D.favs || [];
+  const short = [['Accueil', '40 Kiosque/Accueil', 'leaf'], ['Ma journée', `${Vault.BASE}/Jours/${k}`, 'sun'], ['À faire', `${Vault.BASE}/À faire`, 'todo'], ["Mode d'emploi", "_Mode d'emploi", 'book']];
+  const q = SR.favQ.trim().toLowerCase();
+  const found = q.length >= 2 && SR.idx ? SR.idx.filter(p => noteName(p).toLowerCase().includes(q) && !favs.includes(noteName(p))).slice(0, 6) : [];
+  return `<section class="card dblock">
+      <span class="eyebrow">📂 Ouvrir dans Obsidian</span>
+      <div class="sgrid">${short.map(([l, t, i]) => `<a class="stile" href="${obsUrl(t)}">${ic(i, 20, 1.8)}<span>${esc(l)}</span></a>`).join('')}</div>
+      <div class="between" style="margin-top:6px"><span class="eyebrow">🔖 Favoris</span><button class="link" data-a="fav-edit">${S.favEdit ? 'Terminé' : 'Modifier'}</button></div>
+      ${favs.length ? `<div class="dlist">${favs.map((f, i) => `<div class="frow"><a href="${obsUrl(f)}"><span class="nm">${esc(noteName(f))}</span></a>${S.favEdit ? `<button class="act del" data-a="fav-del" data-i="${i}" aria-label="Retirer ${esc(noteName(f))}">${ic('trash', 16, 1.8)}</button>` : ''}</div>`).join('')}</div>` : `<p class="muted" style="margin:0;font-size:14px">Ajoute les notes que tu veux garder sous la main.</p>`}
+      ${S.favEdit || !favs.length ? `<input class="input" id="favq" placeholder="Chercher une note de La Serre…" value="${esc(SR.favQ)}" autocomplete="off">
+        ${found.length ? `<div class="list">${found.map(p => `<button class="li addfav" data-a="fav-add" data-p="${esc(p)}"><span>${esc(noteName(p))}<small>${esc(p.split('/')[0])}</small></span>${ic('plus', 18, 2)}</button>`).join('')}</div>` : ''}` : ''}
+    </section>`;
+}
+function vSerre() {
+  if (!SR.ideaPath && !SR.ideaErr && SY.user) setTimeout(() => loadIdea(), 0);
+  if (SY.user && (!KIO.notes || KIO.head !== SY.head) && !KIO.loading && KIO.failed !== SY.head) setTimeout(() => loadKiosque(), 0);
+  const N = KIO.notes || [];
+  const blocks = [dJournee(), dSemer(), dQuestion(N), dIdee(N), dLecture(N), dLecon(N), dPepiniere(N), dAvis(N), dBoite(N), dLiens()].filter(Boolean);
+  return `<main class="screen kiosk">
+    <header style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Ton jardin${!KIO.notes && KIO.loading ? ' · lecture…' : ''}</span><h1 class="h-title">La Serre</h1></header>
+    <div class="dgrid">${blocks.join('')}</div>
+  </main>`;
+}
+const DASH_ACTIONS = {
+  'dash-shuf': el => { const k = el.dataset.k; SHUF[k] = (SHUF[k] === undefined ? Math.floor(Math.random() * 997) : SHUF[k]) + 1; render(); },
+  'avis-f': el => { S.avisF = S.avisF === el.dataset.e ? null : el.dataset.e; render(); },
+  'idea-more': () => { S.ideaOpen = !S.ideaOpen; render(); },
+};
 
 /* --- Journal : objectifs --- */
 const HORIZONS = [['mois', 'Ce mois-ci'], ['trim', 'Ce trimestre'], ['annee', 'Cette année'], ['libre', 'Sans échéance']];
@@ -2677,7 +2819,7 @@ const A = {
   copy: () => { try { navigator.clipboard.writeText(JSON.stringify(D)).then(() => toast('Données copiées'), () => toast('Copie refusée')); } catch (e) { toast('Copie impossible ici'); } },
 };
 
-Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, SERRE_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
+Object.assign(A, AMB_ACTIONS, TODO_ACTIONS, EXTRA_ACTIONS, SPORT_ACTIONS, BREATH_ACTIONS, NOTE_ACTIONS, SYNC_ACTIONS, SERRE_ACTIONS, DASH_ACTIONS, GOAL_ACTIONS, TCC_ACTIONS);
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-a]'); if (!el) return;

@@ -1,5 +1,5 @@
 /* Bifröst : fonctionnement hors ligne */
-const V = 'bifrost-v6';
+const V = 'bifrost-v7';
 const LOCAL = ['./', './index.html', './vault.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './fonts/uncial.woff2', './fonts/cinzel.woff2'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(LOCAL)).then(() => self.skipWaiting()));

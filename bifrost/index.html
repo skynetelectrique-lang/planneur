@@ -2416,7 +2416,7 @@ function dPepiniere(N) {
   }).join('');
   return rows ? block('dp', '🪴 La Pépinière', rows) : '';
 }
-const AVIS_TODO = ['🌱', '🛠️', '🔍', '🤔', '🔁'];
+const AVIS_TODO = ['🌱', '🛠️', '🔍', '🤔', '🔁', '❌'];
 function dAvis(N) {
   const withAvis = N.filter(n => n.type !== 'kiosque' && !n.p.startsWith('_') && avisOf(n).some(a => AVIS_TODO.some(e => a.startsWith(e))));
   if (!withAvis.length) return '';
@@ -2512,7 +2512,7 @@ const DASH_ACTIONS = {
 };
 
 /* ============ Lecteur, avis, pas du jour, recherche, semaine ============ */
-const AVIS_ALL = ['🔥 coup de cœur', '❤️ ça me parle', '🌱 à faire pousser', '🛠️ à tester', '🔍 à creuser', '🤔 à discuter', '🔁 à revoir', '😐 bof', '🍂 compost'];
+const AVIS_ALL = ['🔥 coup de cœur', '❤️ ça me parle', '🌱 à faire pousser', '🛠️ à tester', '🔍 à creuser', '🤔 à discuter', '🔁 à revoir', '😐 bof', '🍂 compost', '❌ à supprimer'];
 const TEXTS = {};
 const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 function resolveNote(name) {
